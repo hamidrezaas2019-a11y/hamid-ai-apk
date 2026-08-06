@@ -1,5 +1,2 @@
 # _redirects
 /* /index.html 200
-
-# 404 صفحه
-/404.html /index.html 404
