@@ -6,7 +6,7 @@
   "assets": {
     "directory": ".",
     "binding": "ASSETS",
-    "not_found_handling": "404.html"
+    "not_found_handling": "single-page-application"
   },
   "observability": {
     "enabled": true
