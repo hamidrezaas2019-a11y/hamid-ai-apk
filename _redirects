@@ -1,2 +1,5 @@
-# _redirects
-/* /index.html 200
+# حذف کردن .html از انتهای آدرس‌ها
+/*.html /:splat 301
+
+# صفحات اصلی
+/ /index.html 200
