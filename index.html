@@ -1,0 +1,1678 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0a12">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>🔥 حمید AI - نسخه کامل بینهایت</title>
+    
+    <style>
+        /* ===== CSS کامل ===== */
+        :root {
+            --bg: #0a0a12;
+            --panel: #12122a;
+            --panel-2: #1a1a35;
+            --line: #2a2a55;
+            --ink: #f0f0ff;
+            --ink-dim: #8888bb;
+            --pink: #ff6b9d;
+            --pink-dark: #ff3d6f;
+            --accent: #ffd700;
+            --neon: #00ffff;
+            --purple: #a855f7;
+            --blue: #3b82f6;
+            --green: #10b981;
+            --orange: #f59e0b;
+            --red: #ef4444;
+            --cyan: #06b6d4;
+            --radius: 20px;
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+        
+        body {
+            font-family: 'Segoe UI', 'Vazirmatn', Tahoma, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--ink);
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        ::-webkit-scrollbar { width: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--pink), var(--accent)); border-radius: 10px; }
+
+        @keyframes float { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+        @keyframes gradient { 0% { background-position:0% 50%; } 50% { background-position:100% 50%; } 100% { background-position:0% 50%; } }
+        @keyframes slideIn { from { opacity:0; transform:translateX(-30px); } to { opacity:1; transform:translateX(0); } }
+        @keyframes slideInRight { from { opacity:0; transform:translateX(30px); } to { opacity:1; transform:translateX(0); } }
+        @keyframes glow { 0%,100% { box-shadow:0 0 20px var(--pink); } 50% { box-shadow:0 0 40px var(--neon); } }
+        @keyframes spin { 100% { transform:rotate(360deg); } }
+        @keyframes typing { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+        @keyframes wave { 0% { transform:rotate(0deg); } 25% { transform:rotate(20deg); } 75% { transform:rotate(-20deg); } 100% { transform:rotate(0deg); } }
+
+        /* ===== نوار بالا ===== */
+        .topbar {
+            position: fixed; top:0; left:0; right:0; z-index:1000;
+            background: rgba(10,10,18,0.95); backdrop-filter:blur(30px);
+            padding: 8px 16px;
+            display: flex; justify-content:space-between; align-items:center;
+            border-bottom: 1px solid rgba(255,107,157,0.2);
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .logo {
+            display: flex; align-items:center; gap:10px;
+        }
+
+        .logo-icon {
+            width: 40px; height:40px;
+            background: linear-gradient(135deg, var(--accent), var(--pink), var(--purple));
+            background-size: 200% 200%;
+            animation: gradient 3s ease infinite;
+            border-radius: 12px;
+            display: flex; align-items:center; justify-content:center;
+            font-size: 18px; font-weight:900; color:#0a0a12;
+            box-shadow: 0 0 30px rgba(255,107,157,0.5);
+        }
+
+        .logo-text {
+            font-size: 18px; font-weight:800;
+            background: linear-gradient(135deg, var(--ink), var(--pink), var(--neon));
+            background-size: 200% 200%;
+            animation: gradient 3s ease infinite;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .super-badge {
+            font-size: 8px;
+            background: linear-gradient(135deg, var(--pink), var(--purple));
+            color: white; padding: 2px 8px; border-radius:20px;
+            font-weight:700; letter-spacing:0.5px;
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        .tabs {
+            display: flex; gap:4px;
+            background: var(--panel-2);
+            padding: 4px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,107,157,0.3);
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 6px 12px;
+            border: none;
+            background: transparent;
+            color: var(--ink-dim);
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            white-space: nowrap;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+            color: white;
+            box-shadow: 0 0 20px rgba(255,107,157,0.5);
+            transform: scale(1.05);
+        }
+
+        .tab-btn:hover:not(.active) {
+            background: rgba(255,107,157,0.1);
+            color: white;
+        }
+
+        /* ===== محتوای اصلی ===== */
+        .main-container {
+            margin-top: 60px;
+            height: calc(100vh - 60px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== چت ===== */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .msg {
+            max-width: 88%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.7;
+            position: relative;
+        }
+
+        .msg.user {
+            background: linear-gradient(135deg, var(--panel-2), var(--panel));
+            align-self: flex-start;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease;
+        }
+
+        .msg.ai {
+            background: linear-gradient(135deg, #2a1a3a, #1a2a3a);
+            align-self: flex-end;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 4px 15px rgba(255,107,157,0.2);
+            animation: slideInRight 0.3s ease;
+            border: 1px solid rgba(255,107,157,0.2);
+        }
+
+        .msg .time {
+            font-size: 9px;
+            color: rgba(255,255,255,0.4);
+            display: block;
+            margin-top: 6px;
+        }
+
+        .msg .character-emoji {
+            position: absolute;
+            top: -14px;
+            left: 10px;
+            font-size: 22px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        /* ===== ورودی ===== */
+        .input-area {
+            padding: 12px 16px;
+            background: rgba(18,18,42,0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255,107,157,0.2);
+        }
+
+        .quick-buttons {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            padding-bottom: 8px;
+            overflow-x: auto;
+        }
+
+        .quick-buttons button {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--ink-dim);
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .quick-buttons button:hover {
+            border-color: var(--pink);
+            color: white;
+            background: rgba(255,107,157,0.1);
+        }
+
+        .input-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .input-row input[type="text"] {
+            flex: 1;
+            background: var(--panel-2);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 25px;
+            padding: 10px 16px;
+            color: var(--ink);
+            font-size: 13px;
+            outline: none;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .input-row input[type="text"]:focus {
+            border-color: var(--pink);
+            box-shadow: 0 0 30px rgba(255,107,157,0.3);
+            background: rgba(26,26,53,0.8);
+        }
+
+        .input-row button {
+            width: 42px;
+            height: 42px;
+            border: none;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--pink), var(--purple));
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            display: flex; align-items:center; justify-content:center;
+            box-shadow: 0 0 20px rgba(255,107,157,0.3);
+            flex-shrink: 0;
+        }
+
+        .input-row button:hover {
+            transform: scale(1.1) rotate(90deg);
+            box-shadow: 0 0 40px rgba(255,107,157,0.6);
+        }
+
+        .input-row button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ===== شخصیت‌ها ===== */
+        .character-selector {
+            position: fixed;
+            bottom: 90px;
+            left: 10px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .character-btn {
+            width: 40px; height:40px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.2);
+            background: rgba(26,26,53,0.9);
+            backdrop-filter: blur(10px);
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex; align-items:center; justify-content:center;
+        }
+
+        .character-btn.active {
+            border-color: var(--pink);
+            box-shadow: 0 0 30px rgba(255,107,157,0.5);
+            transform: scale(1.1);
+        }
+
+        .character-btn:hover {
+            border-color: var(--pink);
+            transform: scale(1.1);
+        }
+
+        .character-panel {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(18,18,42,0.98);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255,107,157,0.3);
+            border-radius: 20px;
+            padding: 20px;
+            z-index: 2000;
+            display: none;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.8);
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .character-panel.active {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        .character-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .character-card {
+            background: rgba(26,26,53,0.8);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .character-card:hover {
+            border-color: var(--pink);
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(255,107,157,0.3);
+        }
+
+        .character-card .avatar {
+            font-size: 32px;
+            margin-bottom: 4px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .character-card .name {
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .character-card .age {
+            color: var(--ink-dim);
+            font-size: 9px;
+        }
+
+        /* ===== مودال ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1500;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        /* ===== گالری ===== */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 12px;
+            padding: 15px 0;
+        }
+
+        .gallery-item {
+            background: var(--panel-2);
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            cursor: pointer;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-5px);
+            border-color: var(--pink);
+            box-shadow: 0 15px 40px rgba(255,107,157,0.2);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 130px;
+            object-fit: cover;
+        }
+
+        .gallery-item .caption {
+            padding: 8px;
+            font-size: 11px;
+            color: var(--ink-dim);
+            text-align: center;
+        }
+
+        /* ===== موسیقی ===== */
+        .music-player {
+            background: linear-gradient(135deg, var(--panel-2), var(--panel));
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(255,107,157,0.2);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .music-visualizer {
+            height: 40px;
+            background: rgba(255,107,157,0.05);
+            border-radius: 10px;
+            margin: 12px 0;
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            padding: 6px;
+        }
+
+        .visualizer-bar {
+            flex: 1;
+            background: linear-gradient(180deg, var(--pink), var(--accent));
+            border-radius: 3px;
+            animation: equalizer 1s ease-in-out infinite;
+        }
+
+        @keyframes equalizer {
+            0%,100% { height:10%; }
+            50% { height:100%; }
+        }
+
+        .playlist-item {
+            padding: 10px 14px;
+            background: rgba(26,26,53,0.6);
+            border-radius: 12px;
+            border: 1px solid rgba(255,107,157,0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            margin-bottom: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .playlist-item:hover {
+            border-color: var(--pink);
+            transform: scale(1.02);
+        }
+
+        /* ===== ویدیو ===== */
+        .video-player {
+            background: linear-gradient(135deg, var(--panel-2), var(--panel));
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255,107,157,0.2);
+        }
+
+        .video-player video {
+            width: 100%;
+            max-height: 400px;
+            display: block;
+        }
+
+        /* ===== ستون پاسخ‌های هوش مصنوعی ===== */
+        .ai-models {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .ai-model-card {
+            background: var(--panel-2);
+            border-radius: 14px;
+            padding: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .ai-model-card:hover {
+            border-color: var(--pink);
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(255,107,157,0.3);
+        }
+
+        .ai-model-card .model-icon {
+            font-size: 30px;
+        }
+
+        .ai-model-card .model-name {
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 6px;
+        }
+
+        /* ===== موضوعات ===== */
+        .topics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .topic-card {
+            background: var(--panel-2);
+            border-radius: 14px;
+            padding: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .topic-card:hover {
+            border-color: var(--pink);
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255,107,157,0.2);
+        }
+
+        .topic-card .topic-icon {
+            font-size: 28px;
+        }
+
+        .topic-card .topic-name {
+            color: var(--ink-dim);
+            font-size: 11px;
+            margin-top: 4px;
+        }
+
+        /* ===== نوتیفیکیشن ===== */
+        .notification {
+            position: fixed;
+            top: 70px;
+            right: 10px;
+            background: linear-gradient(135deg, var(--pink), var(--purple));
+            color: white;
+            padding: 10px 16px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(255,107,157,0.5);
+            z-index: 3000;
+            animation: slideIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            max-width: 90%;
+        }
+
+        /* ===== ریسپانسیو ===== */
+        @media (max-width: 768px) {
+            .topbar { padding: 6px 10px; }
+            .logo-text { font-size: 14px; }
+            .tab-btn { font-size: 9px; padding: 4px 8px; }
+            .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+            .character-grid { grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); }
+            .ai-models { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+            .topics-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); }
+            .character-selector { bottom: 80px; left: 5px; }
+            .character-btn { width: 34px; height: 34px; font-size: 14px; }
+            .msg { max-width: 92%; font-size: 13px; padding: 10px 14px; }
+            .quick-buttons button { font-size: 9px; padding: 3px 10px; }
+        }
+
+        @media (max-width: 480px) {
+            .tabs { gap: 2px; padding: 3px; }
+            .tab-btn { font-size: 8px; padding: 3px 6px; }
+            .logo-icon { width: 30px; height: 30px; font-size: 14px; }
+            .logo-text { font-size: 12px; }
+            .super-badge { font-size: 7px; padding: 1px 6px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== نوار بالا ===== -->
+    <header class="topbar">
+        <div class="logo">
+            <div class="logo-icon">👸</div>
+            <span class="logo-text">حمید AI</span>
+            <span class="super-badge">✨ کامل</span>
+        </div>
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="chat">💬 چت</button>
+            <button class="tab-btn" data-tab="images">📸 تصاویر</button>
+            <button class="tab-btn" data-tab="music">🎵 موسیقی</button>
+            <button class="tab-btn" data-tab="video">🎬 ویدیو</button>
+            <button class="tab-btn" data-tab="models">🤖 مدل‌ها</button>
+            <button class="tab-btn" data-tab="topics">📚 موضوعات</button>
+            <button class="tab-btn" data-tab="characters">👥 شخصیت‌ها</button>
+        </div>
+    </header>
+
+    <!-- ===== انتخابگر شناور شخصیت ===== -->
+    <div class="character-selector" id="characterSelector">
+        <button class="character-btn active" data-character="sara" title="سارا">👩‍🦰</button>
+        <button class="character-btn" data-character="leyla" title="لیلا">👩‍🦳</button>
+        <button class="character-btn" data-character="zahra" title="زهرا">👩</button>
+        <button class="character-btn" data-character="maryam" title="مریم">👩‍🦱</button>
+        <button class="character-btn" id="moreCharactersBtn" title="شخصیت‌های بیشتر">➕</button>
+    </div>
+
+    <!-- ===== پنل شخصیت‌های بیشتر ===== -->
+    <div class="modal-overlay" id="characterModal">
+        <div class="character-panel">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <h3 style="color:white; font-size:18px;">👥 انتخاب شخصیت</h3>
+                <button onclick="closeCharacterPanel()" style="background:none; border:none; color:white; font-size:22px; cursor:pointer;">✕</button>
+            </div>
+            <div class="character-grid" id="characterGrid"></div>
+            <div style="margin-top:12px; text-align:center;">
+                <button onclick="addRandomCharacter()" style="background:linear-gradient(135deg, var(--pink), var(--purple)); border:none; padding:8px 16px; border-radius:16px; color:white; cursor:pointer; font-weight:600; font-size:13px;">
+                    ✨ ساخت شخصیت جدید
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== محتوای اصلی ===== -->
+    <div class="main-container">
+
+        <!-- ===== چت ===== -->
+        <div class="tab-content active" id="tab-chat">
+            <div class="chat-messages" id="chatMessages">
+                <div style="text-align:center;padding:60px 15px;color:var(--ink-dim);">
+                    <div style="font-size:60px;margin-bottom:15px;animation:float 3s ease-in-out infinite;">👸</div>
+                    <h2 style="color:white;font-size:22px;background:linear-gradient(135deg, var(--ink), var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">
+                        به حمید AI خوش اومدی!
+                    </h2>
+                    <p style="margin-top:10px;font-size:14px;color:var(--ink-dim);">
+                        🎭 بیش از 100+ شخصیت دخترانه
+                    </p>
+                    <p style="font-size:12px;color:var(--ink-dim);margin-top:6px;">
+                        چت، عکس، موسیقی، ویدیو، مدل‌های هوش مصنوعی و کلی امکانات دیگه...
+                    </p>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <div class="quick-buttons" id="quickButtons">
+                    <button onclick="quickAction('workout')">💪 ورزش</button>
+                    <button onclick="quickAction('decor')">🛋️ دکور</button>
+                    <button onclick="quickAction('gardening')">🌱 باغبانی</button>
+                    <button onclick="quickAction('pet')">🐕 حیوانات</button>
+                    <button onclick="quickAction('environment')">🌍 محیط زیست</button>
+                    <button onclick="quickAction('health')">🧠 سلامت</button>
+                    <button onclick="quickAction('travel')">✈️ سفر</button>
+                    <button onclick="quickAction('stargazing')">🔭 ستاره‌شناسی</button>
+                    <button onclick="quickAction('photo')">📸 عکس</button>
+                    <button onclick="quickAction('music')">🎵 موزیک</button>
+                    <button onclick="quickAction('movie')">🎬 فیلم</button>
+                    <button onclick="quickAction('poem')">📝 شعر</button>
+                    <button onclick="quickAction('code')">💻 کد</button>
+                    <button onclick="quickAction('joke')">😄 جوک</button>
+                    <button onclick="quickAction('compliment')">💖 تعریف</button>
+                    <button onclick="clearChat()">🗑️ پاک کردن</button>
+                </div>
+
+                <div class="input-row">
+                    <input type="text" id="chatInput" placeholder="با دوست دختر مجازی خودت حرف بزن..." autocomplete="off" />
+                    <button id="sendBtn" onclick="sendMessage()">💬</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== تصاویر ===== -->
+        <div class="tab-content" id="tab-images">
+            <h3 style="margin-bottom:12px;background:linear-gradient(135deg, var(--pink), var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:18px;">
+                🎨 گالری تصاویر هوش مصنوعی
+            </h3>
+            <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+                <input type="text" id="imagePrompt" placeholder="توضیح تصویر مورد نظرت رو بنویس..." style="flex:1;min-width:150px;background:var(--panel-2);border:2px solid rgba(255,107,157,0.2);border-radius:25px;padding:10px 16px;color:var(--ink);outline:none;font-size:13px;" />
+                <button onclick="generateImage()" style="background:linear-gradient(135deg, var(--pink), var(--purple));border:none;border-radius:25px;padding:10px 24px;color:white;font-weight:700;cursor:pointer;box-shadow:0 0 20px rgba(255,107,157,0.3);">
+                    ✨ خلق کن
+                </button>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+                <button onclick="generateQuickImage('دختر زیبا')" style="background:rgba(255,107,157,0.1);border:1px solid rgba(255,107,157,0.3);color:var(--ink);padding:4px 12px;border-radius:16px;cursor:pointer;font-size:11px;">👩 دختر</button>
+                <button onclick="generateQuickImage('طبیعت')" style="background:rgba(255,107,157,0.1);border:1px solid rgba(255,107,157,0.3);color:var(--ink);padding:4px 12px;border-radius:16px;cursor:pointer;font-size:11px;">🌿 طبیعت</button>
+                <button onclick="generateQuickImage('فضا')" style="background:rgba(255,107,157,0.1);border:1px solid rgba(255,107,157,0.3);color:var(--ink);padding:4px 12px;border-radius:16px;cursor:pointer;font-size:11px;">🚀 فضا</button>
+                <button onclick="generateQuickImage('هنر انتزاعی')" style="background:rgba(255,107,157,0.1);border:1px solid rgba(255,107,157,0.3);color:var(--ink);padding:4px 12px;border-radius:16px;cursor:pointer;font-size:11px;">🎨 هنر</button>
+                <button onclick="generateQuickImage('آینده')" style="background:rgba(255,107,157,0.1);border:1px solid rgba(255,107,157,0.3);color:var(--ink);padding:4px 12px;border-radius:16px;cursor:pointer;font-size:11px;">🤖 آینده</button>
+                <button onclick="generateQuickImage('قلعه')" style="background:rgba(255,107,157,0.1);border:1px solid rgba(255,107,157,0.3);color:var(--ink);padding:4px 12px;border-radius:16px;cursor:pointer;font-size:11px;">🏰 قلعه</button>
+            </div>
+            <div class="gallery-grid" id="imageGallery"></div>
+        </div>
+
+        <!-- ===== موسیقی ===== -->
+        <div class="tab-content" id="tab-music">
+            <h3 style="margin-bottom:12px;background:linear-gradient(135deg, var(--accent), var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:18px;">
+                🎵 پخش‌کننده موسیقی هوشمند
+            </h3>
+            <div class="music-player">
+                <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+                    <div style="width:60px;height:60px;background:linear-gradient(135deg, var(--pink), var(--accent));border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:32px;animation:float 3s ease-in-out infinite;">
+                        🎵
+                    </div>
+                    <div>
+                        <h4 id="currentSongTitle" style="color:white;font-size:16px;">آهنگ انتخاب نشده</h4>
+                        <p id="currentSongArtist" style="color:var(--ink-dim);font-size:12px;margin-top:2px;">هنرمند</p>
+                    </div>
+                </div>
+                
+                <div class="music-visualizer">
+                    <div class="visualizer-bar" style="animation-delay:0s;"></div>
+                    <div class="visualizer-bar" style="animation-delay:0.1s;"></div>
+                    <div class="visualizer-bar" style="animation-delay:0.2s;"></div>
+                    <div class="visualizer-bar" style="animation-delay:0.3s;"></div>
+                    <div class="visualizer-bar" style="animation-delay:0.4s;"></div>
+                    <div class="visualizer-bar" style="animation-delay:0.5s;"></div>
+                    <div class="visualizer-bar" style="animation-delay:0.6s;"></div>
+                    <div class="visualizer-bar" style="animation-delay:0.7s;"></div>
+                    <div class="visualizer-bar" style="animation-delay:0.8s;"></div>
+                    <div class="visualizer-bar" style="animation-delay:0.9s;"></div>
+                </div>
+                
+                <audio id="audioPlayer" controls style="width:100%;margin:12px 0;"></audio>
+                
+                <div id="playlist"></div>
+            </div>
+        </div>
+
+        <!-- ===== ویدیو ===== -->
+        <div class="tab-content" id="tab-video">
+            <h3 style="margin-bottom:12px;background:linear-gradient(135deg, var(--blue), var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:18px;">
+                🎬 پخش‌کننده ویدیو
+            </h3>
+            <div class="video-player">
+                <video id="videoPlayer" controls style="width:100%;border-radius:12px;">
+                    <source src="" type="video/mp4" />
+                </video>
+                <div style="padding:16px;">
+                    <input type="text" id="videoUrl" placeholder="لینک ویدیو رو اینجا بذار..." style="width:100%;background:var(--panel-2);border:2px solid rgba(255,107,157,0.2);border-radius:25px;padding:10px 16px;color:var(--ink);outline:none;font-size:13px;margin-bottom:10px;" />
+                    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+                        <button onclick="loadVideo()" style="flex:1;min-width:100px;background:linear-gradient(135deg, var(--pink), var(--purple));border:none;border-radius:25px;padding:10px;color:white;font-weight:700;cursor:pointer;">
+                            ▶️ پخش کن
+                        </button>
+                        <button onclick="clearVideo()" style="flex:1;min-width:100px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.2);border-radius:25px;padding:10px;color:var(--ink-dim);cursor:pointer;">
+                            🗑️ حذف
+                        </button>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(120px, 1fr));gap:8px;" id="videoSuggestions"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== مدل‌های هوش مصنوعی ===== -->
+        <div class="tab-content" id="tab-models">
+            <h3 style="margin-bottom:12px;background:linear-gradient(135deg, var(--neon), var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:18px;">
+                🤖 مدل‌های هوش مصنوعی
+            </h3>
+            <p style="color:var(--ink-dim);font-size:13px;margin-bottom:12px;">
+                انتخاب کن با کدوم مدل هوش مصنوعی صحبت کنی! همه مدل‌ها رایگان و بدون محدودیت.
+            </p>
+            <div class="ai-models" id="aiModelsGrid"></div>
+        </div>
+
+        <!-- ===== موضوعات ===== -->
+        <div class="tab-content" id="tab-topics">
+            <h3 style="margin-bottom:12px;background:linear-gradient(135deg, var(--green), var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:18px;">
+                📚 موضوعات و راهنماها
+            </h3>
+            <p style="color:var(--ink-dim);font-size:13px;margin-bottom:12px;">
+                هر موضوعی که نیاز داری، اینجا هست! با کلیک روی هر کدوم راهنمای کامل دریافت کن.
+            </p>
+            <div class="topics-grid" id="topicsGrid"></div>
+        </div>
+
+        <!-- ===== شخصیت‌ها ===== -->
+        <div class="tab-content" id="tab-characters">
+            <h3 style="margin-bottom:12px;background:linear-gradient(135deg, var(--pink), var(--neon));-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:18px;">
+                👥 کتابخانه شخصیت‌های دخترانه
+            </h3>
+            <p style="color:var(--ink-dim);font-size:13px;margin-bottom:12px;">
+                🎭 بیش از 100 شخصیت مختلف با شخصیت‌ها و ظاهرهای متنوع!
+            </p>
+            <div class="character-grid" id="allCharactersGrid" style="grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));"></div>
+        </div>
+
+    </div>
+
+    <script>
+        // ============================================================
+        // 🚀 حمید AI - نسخه کامل با همه امکانات
+        // ============================================================
+
+        // ===== دیتابیس شخصیت‌ها =====
+        const CHARACTER_DATABASE = {
+            baseCharacters: [
+                { id: 'sara', name: 'سارا', emoji: '👩‍🦰', age: 22, personality: 'مهربان و رمانتیک', style: 'کلاسیک' },
+                { id: 'leyla', name: 'لیلا', emoji: '👩‍🦳', age: 24, personality: 'شاد و پرانرژی', style: 'مدرن' },
+                { id: 'zahra', name: 'زهرا', emoji: '👩', age: 21, personality: 'باهوش و جدی', style: 'رسمی' },
+                { id: 'maryam', name: 'مریم', emoji: '👩‍🦱', age: 23, personality: 'هنرمند و خلاق', style: 'بوهمین' },
+                { id: 'narges', name: 'نرگس', emoji: '👩‍🦲', age: 25, personality: 'جسور و ماجراجو', style: 'اسپرت' },
+                { id: 'parisa', name: 'پریسا', emoji: '👩‍🦯', age: 20, personality: 'خجالتی و شیرین', style: 'کژوال' },
+                { id: 'shirin', name: 'شیرین', emoji: '👩‍🦰', age: 26, personality: 'با اعتماد به نفس', style: 'لوکس' },
+                { id: 'mina', name: 'مینا', emoji: '👱‍♀️', age: 22, personality: 'بازیگوش و شوخ', style: 'فانتزی' },
+                { id: 'roya', name: 'رویا', emoji: '👩‍🦳', age: 28, personality: 'عاقل و مادرانه', style: 'کلاسیک' },
+                { id: 'azita', name: 'آزیتا', emoji: '👩‍🦱', age: 24, personality: 'مرموز و جذاب', style: 'گوتیک' },
+                { id: 'bahar', name: 'بهار', emoji: '👩', age: 21, personality: 'طبیعت‌دوست', style: 'بوهو' },
+                { id: 'setareh', name: 'ستاره', emoji: '👩‍🦰', age: 23, personality: 'رویاپرداز', style: 'فانتزی' },
+            ],
+            
+            generateRandom() {
+                const names = ['آوا','آیلین','آنیتا','باران','بیتا','پگاه','ترانه','ثریا','حدیث','حورا',
+                    'درسا','دلارام','دنیا','رها','رز','رومینا','سارینا','سپیده','سحر','سلین',
+                    'سوگند','شیدا','صبا','غزل','فرشته','فریبا','کتایون','کیانا','گلنار','گلی',
+                    'لاله','مرجان','ملیسا','مهتاب','مهسا','میترا','نازنین','نسترن','نگار','نگین',
+                    'نیکی','نیلوفر','هستی','هلیا','یاسمن','یگانه','یکتا','یلدا','آرزو','آتنا'
+                ];
+                const personalities = ['مهربان','شاد','باهوش','خلاق','جسور','خجالتی','رمانتیک','بازیگوش','عاقل','مرموز'];
+                const styles = ['کلاسیک','مدرن','اسپرت','بوهمین','گوتیک','فانتزی','لوکس','کژوال'];
+                const emojis = ['👩‍🦰','👩‍🦳','👩','👩‍🦱','👩‍🦲','👩‍🦯','👱‍♀️','👧'];
+                
+                return {
+                    id: 'char_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                    name: names[Math.floor(Math.random() * names.length)],
+                    emoji: emojis[Math.floor(Math.random() * emojis.length)],
+                    age: Math.floor(Math.random() * 10) + 20,
+                    personality: personalities[Math.floor(Math.random() * personalities.length)],
+                    style: styles[Math.floor(Math.random() * styles.length)]
+                };
+            }
+        };
+
+        // ===== دیتابیس مدل‌های هوش مصنوعی =====
+        const AI_MODELS = [
+            { id: 'openai', name: 'OpenAI GPT-5.1', icon: '🧠', color: '#10a37f' },
+            { id: 'gemini', name: 'Google Gemini', icon: '💎', color: '#4285f4' },
+            { id: 'claude', name: 'Claude 3.5', icon: '🤖', color: '#d97706' },
+            { id: 'deepseek', name: 'DeepSeek-R1', icon: '🔍', color: '#6366f1' },
+            { id: 'grok', name: 'Grok', icon: '🦋', color: '#f43f5e' },
+            { id: 'mistral', name: 'Mistral', icon: '🌪️', color: '#7c3aed' },
+            { id: 'llama', name: 'LLaMA 3', icon: '🦙', color: '#f59e0b' },
+            { id: 'nova', name: 'Nova AI', icon: '⭐', color: '#ec4899' },
+        ];
+
+        // ===== دیتابیس موضوعات =====
+        const TOPICS = [
+            { id: 'workout', name: 'ورزش', icon: '💪', emoji: '🏋️' },
+            { id: 'decor', name: 'دکوراسیون', icon: '🛋️', emoji: '🏠' },
+            { id: 'gardening', name: 'باغبانی', icon: '🌱', emoji: '🌿' },
+            { id: 'pet', name: 'حیوانات خانگی', icon: '🐕', emoji: '🐱' },
+            { id: 'environment', name: 'محیط زیست', icon: '🌍', emoji: '🌿' },
+            { id: 'health', name: 'سلامت', icon: '🧠', emoji: '💪' },
+            { id: 'travel', name: 'سفر', icon: '✈️', emoji: '🗺️' },
+            { id: 'stargazing', name: 'ستاره‌شناسی', icon: '🔭', emoji: '⭐' },
+            { id: 'cooking', name: 'آشپزی', icon: '🍳', emoji: '🥘' },
+            { id: 'coding', name: 'برنامه‌نویسی', icon: '💻', emoji: '⌨️' },
+            { id: 'art', name: 'هنر', icon: '🎨', emoji: '🖌️' },
+            { id: 'music', name: 'موسیقی', icon: '🎵', emoji: '🎶' },
+            { id: 'fashion', name: 'مد', icon: '👗', emoji: '👠' },
+            { id: 'technology', name: 'فناوری', icon: '📱', emoji: '💻' },
+            { id: 'science', name: 'علوم', icon: '🔬', emoji: '🧪' },
+            { id: 'history', name: 'تاریخ', icon: '📜', emoji: '🏛️' },
+            { id: 'psychology', name: 'روانشناسی', icon: '🧠', emoji: '💭' },
+            { id: 'photography', name: 'عکاسی', icon: '📷', emoji: '🎞️' },
+        ];
+
+        // ===== دیتابیس موسیقی =====
+        const MUSIC_DATABASE = [
+            { title: 'دلبر', artist: 'محسن چاوشی', genre: 'پاپ', mood: 'رمانتیک', url: 'https://dl.sbsmusic.ir/Mp3/1403/Mohsen%20Chavoshi%20-%20Delbar%20(128).mp3' },
+            { title: 'بی تو', artist: 'محمد علیزاده', genre: 'پاپ', mood: 'غمگین', url: 'https://dl.sbsmusic.ir/Mp3/1403/Mohammad%20Alizadeh%20-%20Bi%20To%20(128).mp3' },
+            { title: 'همه می‌دونن', artist: 'شهرام شکوهی', genre: 'پاپ', mood: 'شاد', url: 'https://dl.sbsmusic.ir/Mp3/1403/Shahram%20Shokoohi%20-%20Hame%20Midoonan%20(128).mp3' },
+            { title: 'دور', artist: 'رضا بهرام', genre: 'پاپ', mood: 'غمگین', url: 'https://dl.sbsmusic.ir/Mp3/1403/Reza%20Bahram%20-%20Door%20(128).mp3' },
+            { title: 'عشق', artist: 'همایون شجریان', genre: 'سنتی', mood: 'رمانتیک', url: 'https://dl.sbsmusic.ir/Mp3/1403/Homayoun%20Shajarian%20-%20Eshgh%20(128).mp3' },
+            { title: 'باران', artist: 'داریوش', genre: 'کلاسیک', mood: 'نوستالژیک', url: 'https://dl.sbsmusic.ir/Mp3/1403/Dariush%20-%20Baran%20(128).mp3' },
+        ];
+
+        // ===== دیتابیس فیلم =====
+        const MOVIE_DATABASE = [
+            { title: 'مرد عنکبوتی', genre: 'اکشن', year: 2021, url: 'https://www.youtube.com/embed/rt-2gAiGXfY' },
+            { title: 'انتقامجویان', genre: 'اکشن', year: 2019, url: 'https://www.youtube.com/embed/TcMBFSGVi1c' },
+            { title: 'تایتانیک', genre: 'رمانتیک', year: 1997, url: 'https://www.youtube.com/embed/kVrqfYjkTdQ' },
+            { title: 'رستگاری', genre: 'درام', year: 1994, url: 'https://www.youtube.com/embed/6hB3S9bIaco' },
+            { title: 'تلقین', genre: 'علمی تخیلی', year: 2010, url: 'https://www.youtube.com/embed/YoHD9XEInc0' },
+        ];
+
+        // ===== دیکشنری پاسخ‌های موضوعات =====
+        const TOPIC_RESPONSES = {
+            workout: {
+                title: '💪 برنامه ورزشی در خانه برای مبتدیان',
+                content: `🏋️ **برنامه ورزشی ۱۵ دقیقه‌ای روزانه:**
+
+                1. **حرکات کششی** (۳ دقیقه)
+                   - گردن، شانه‌ها، کمر و پاها
+
+                2. **اسکوات** (۳ ست × ۱۵ تکرار)
+                   - پاها به اندازه عرض شانه، زانوها خم
+
+                3. **شنا سوئدی** (۳ ست × ۱۰ تکرار)
+                   - روی زانوها، دست‌ها زیر شانه
+
+                4. **پلانک** (۳ ست × ۳۰ ثانیه)
+                   - بدن صاف، آرنج‌ها زیر شانه
+
+                5. **لانج** (۳ ست × ۱۰ تکرار هر پا)
+                   - گام بلند به جلو، زانو خم
+
+                6. **کرانچ** (۳ ست × ۱۵ تکرار)
+                   - دراز کشیده، شانه‌ها را بلند کن
+
+                🔥 **نکات مهم:**
+                - قبل از ورزش حتماً بدن رو گرم کن
+                - آب کافی بنوش
+                - حرکات رو درست و اصولی انجام بده
+                - روزهای استراحت رو فراموش نکن`
+            },
+            decor: {
+                title: '🛋️ نکات دکوراسیون برای فضای نشیمن دنج',
+                content: `🏠 **۷ راز برای فضای نشیمن دنج و گرم:**
+
+                1. **نورپردازی لایه‌ای**
+                   - از نورهای مختلف (میز، ایستاده، سقفی) استفاده کن
+
+                2. **مبلمان راحت**
+                   - مبل بزرگ با کوسن‌های نرم و پتو
+
+                3. **رنگ‌های گرم**
+                   - رنگ‌های خاکی، کرم، سبز زیتونی و قهوه‌ای
+
+                4. **گیاهان طبیعی**
+                   - چند گلدان بزرگ و کوچک برای طراوت
+
+                5. **قالی و فرش**
+                   - قالی بزرگ با بافت نرم و گرم
+
+                6. **آثار هنری**
+                   - تابلوهای مورد علاقت رو روی دیوار بذار
+
+                7. **جزئیات شخصی**
+                   - کتاب‌ها، شمع‌ها و اشیاء خاطره‌انگیز
+
+                💡 **راز اصلی:** ترکیب بافت‌ها و لایه‌های مختلف`
+            },
+            gardening: {
+                title: '🌱 نکات باغبانی داخلی برای گیاهان شاداب',
+                content: `🌿 **۷ نکته طلایی برای باغبانی داخلی:**
+
+                1. **نور مناسب**
+                   - گیاهان رو نزدیک پنجره جنوبی بذار
+                   - برای نور کم، از چراغ رشد استفاده کن
+
+                2. **آبیاری اصولی**
+                   - اجازه بده خاک بین دو آبیاری خشک بشه
+                   - انگشتت رو داخل خاک بکن تا رطوبت رو چک کنی
+
+                3. **خاک مناسب**
+                   - از خاک مخصوص گلدان با زهکشی خوب استفاده کن
+
+                4. **رطوبت**
+                   - برگ‌ها رو غبارپاشی کن
+                   - از دستگاه بخور استفاده کن
+
+                5. **کوددهی**
+                   - ماهی یکبار کود مایع بده
+                   - در فصل رشد بیشتر کود بده
+
+                6. **تعویض گلدان**
+                   - هر ۱-۲ سال گلدان رو عوض کن
+
+                7. **گیاهان مناسب برای داخل:**
+                   - سانسوریا، پوتوس، زاموفیلیا، آلوئه‌ورا`
+            },
+            pet: {
+                title: '🐕 آموزش توله سگ برای رفتار خوب',
+                content: `🐾 **۱۰ نکته طلایی آموزش توله سگ:**
+
+                1. **صبر و حوصله**
+                   - توله سگ‌ها مثل بچه‌ها هستن، آروم باش
+
+                2. **تشویق مثبت**
+                   - با جایزه و محبت، رفتار خوب رو تقویت کن
+
+                3. **دستورات پایه**
+                   - بشین، بیا، بمون، نه - روزانه تمرین کن
+
+                4. **آموزش دستشویی**
+                   - هر ۲-۳ ساعت ببر بیرون
+                   - بعد از غذا و خواب ببر
+
+                5. **اجتماعی‌سازی**
+                   - با سگ‌ها و آدم‌های مختلف آشنا کن
+
+                6. **تمرین کوتاه**
+                   - هر جلسه ۵-۱۰ دقیقه، روزی چند بار
+
+                7. **یکنواختی**
+                   - دستورات و قوانین رو همیشه رعایت کن
+
+                8. **اسباب‌بازی**
+                   - برای سرگرمی و جلوگیری از خرابکاری
+
+                9. **دادن جایزه**
+                   - فقط وقتی که دستور رو درست انجام داد
+
+                10. **دوره آموزشی**
+                    - کلاس آموزش سگ می‌تونه کمک کنه`
+            },
+            environment: {
+                title: '🌍 راه‌های کاهش مصرف انرژی در خانه',
+                content: `💚 **۱۰ راه ساده برای کاهش مصرف انرژی:**
+
+                1. **چراغ‌های LED**
+                   - همه لامپ‌ها رو به LED تبدیل کن
+
+                2. **وسایل کم‌مصرف**
+                   - لوازم خانگی با رتبه انرژی A++
+
+                3. **خاموش کردن**
+                   - وسایل برقی رو از پریز بکش وقتی استفاده نمی‌کنی
+
+                4. **مایکروویو**
+                   - برای گرم کردن غذا از مایکروویو استفاده کن
+
+                5. **یخچال**
+                   - در یخچال رو کمتر باز کن، دمای مناسب بذار
+
+                6. **لباسشویی**
+                   - با آب سرد لباس بشور، خشک‌کن کم‌تر استفاده کن
+
+                7. **گرمایش و سرمایش**
+                   - ترموستات رو ۱-۲ درجه تنظیم کن
+                   - از پرده‌های ضخیم برای عایق‌بندی استفاده کن
+
+                8. **آب گرم**
+                   - آبگرمکن رو روی ۴۹ درجه تنظیم کن
+
+                9. **پخت و پز**
+                   - با درب ظرف بپز تا انرژی کم‌تر مصرف بشه
+
+                10. **انرژی خورشیدی**
+                    - از پنل‌های خورشیدی برای تولید برق استفاده کن`
+            },
+            health: {
+                title: '🧠 راه‌های حفظ سلامت روان',
+                content: `💆 **۷ راهکار برای سلامت روان بهتر:**
+
+                1. **مدیتیشن روزانه**
+                   - ۵-۱۰ دقیقه در روز مدیتیشن کن
+
+                2. **ورزش منظم**
+                   - حداقل ۲۰ دقیقه در روز پیاده‌روی یا ورزش
+
+                3. **خواب کافی**
+                   - ۷-۸ ساعت خواب با کیفیت
+
+                4. **تغذیه سالم**
+                   - میوه، سبزیجات و آب کافی
+
+                5. **ارتباط اجتماعی**
+                   - با دوستان و خانواده وقت بگذرون
+
+                6. **هدف‌گذاری**
+                   - اهداف کوچک و قابل دسترس تعیین کن
+
+                7. **حرف زدن**
+                   - احساساتت رو با کسی که بهش اعتماد داری درمیون بذار
+
+                🌟 **نکات اضافی:**
+                - به خودت سخت نگیر
+                - از کارهایی که دوست داری لذت ببر
+                - یاد بگیر نه بگی
+                - کمک حرفه‌ای رو دریغ نکن`
+            },
+            travel: {
+                title: '✈️ شهرهای دیدنی برای فرهنگ، غذا و تاریخ',
+                content: `🌍 **۵ شهر برتر برای مسافران فرهنگ‌دوست:**
+
+                1. **استانبول، ترکیه**
+                   - تاریخ: ایاصوفیه، کاخ توپکاپی
+                   - غذا: کباب، باقلوا، چای ترکی
+                   - فرهنگ: بازار بزرگ، مساجد تاریخی
+
+                2. **رم، ایتالیا**
+                   - تاریخ: کولوسئوم، واتیکان
+                   - غذا: پاستا، پیتزا، جلاتو
+                   - فرهنگ: فواره تروی، میدان اسپانیا
+
+                3. **کیوتو، ژاپن**
+                   - تاریخ: معابد و زیارتگاه‌ها
+                   - غذا: سوشی، تمپورا، ماچا
+                   - فرهنگ: مراسم چای، باغ‌های ژاپنی
+
+                4. **مراکش، مراکش**
+                   - تاریخ: مدینه، مسجد کتبیه
+                   - غذا: تاجین، کوسکوس
+                   - فرهنگ: بازارهای رنگارنگ
+
+                5. **مکزیکو سیتی، مکزیک**
+                   - تاریخ: اهرام تئوتیهواکان
+                   - غذا: تاکو، گواکاموله
+                   - فرهنگ: موزه فیدا کالو`
+            },
+            stargazing: {
+                title: '🔭 نکات رصد ستارگان با تلسکوپ',
+                content: `⭐ **۷ نکته برای رصد حرفه‌ای:**
+
+                1. **مکان تاریک**
+                   - دور از نورهای شهر، در ارتفاع بالا
+
+                2. **زمان مناسب**
+                   - شب‌های بدون ماه و ابر، بعد از نیمه‌شب
+
+                3. **آماده‌سازی تلسکوپ**
+                   - لنزها رو تمیز کن، تلسکوپ رو تنظیم کن
+
+                4. **انتخاب هدف**
+                   - شروع با ماه، سپس سیارات و کهکشان‌ها
+
+                5. **نقشه ستارگان**
+                   - از اپلیکیشن‌های نجومی استفاده کن
+
+                6. **چشمانت رو عادت بده**
+                   - ۲۰-۳۰ دقیقه در تاریکی باش تا چشمات عادت کنن
+
+                7. **ثبت مشاهدات**
+                   - دفترچه داشته باش و مشاهداتت رو ثبت کن
+
+                🌟 **اجرام جذاب برای شروع:**
+                - ماه، زحل، مشتری، جبار، دب اکبر`
+            }
+        };
+
+        // ===== استیت برنامه =====
+        let currentCharacter = CHARACTER_DATABASE.baseCharacters[0];
+        let allCharacters = [...CHARACTER_DATABASE.baseCharacters];
+        let chatHistory = [];
+        let imageCount = 0;
+        let selectedModel = AI_MODELS[0];
+
+        // ===== مقداردهی اولیه =====
+        function initApp() {
+            loadCharacterSelector();
+            loadAllCharactersGrid();
+            loadPlaylist();
+            loadVideoSuggestions();
+            loadAIModels();
+            loadTopics();
+            setupEventListeners();
+            showWelcomeNotification();
+            
+            if ('speechSynthesis' in window) {
+                speechSynthesis.getVoices();
+            }
+        }
+
+        // ===== راه‌اندازی Event Listeners =====
+        function setupEventListeners() {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+                    document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+                });
+            });
+
+            document.querySelectorAll('.character-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (this.id === 'moreCharactersBtn') {
+                        openCharacterPanel();
+                        return;
+                    }
+                    const charId = this.dataset.character;
+                    const character = allCharacters.find(c => c.id === charId);
+                    if (character) switchCharacter(character);
+                });
+            });
+
+            document.getElementById('chatInput').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            document.getElementById('characterModal').addEventListener('click', function(e) {
+                if (e.target === this) closeCharacterPanel();
+            });
+        }
+
+        // ===== تغییر شخصیت =====
+        function switchCharacter(character) {
+            currentCharacter = character;
+            document.querySelectorAll('.character-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.character === character.id);
+            });
+            showNotification(`شخصیت به ${character.name} ${character.emoji} تغییر کرد!`);
+            
+            const messages = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = 'msg ai';
+            div.innerHTML = `
+                <span class="character-emoji">${character.emoji}</span>
+                سلام! من ${character.name} هستم، ${character.age} ساله با شخصیت ${character.personality}. چطور میتونم کمکت کنم؟ 💕
+                <span class="time">${new Date().toLocaleTimeString('fa-IR')}</span>
+            `;
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+            
+            speakWithCharacter(`سلام! من ${character.name} هستم، چطور میتونم کمکت کنم؟`);
+        }
+
+        // ===== ارسال پیام =====
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
+            
+            const messages = document.getElementById('chatMessages');
+            
+            const userDiv = document.createElement('div');
+            userDiv.className = 'msg user';
+            userDiv.innerHTML = text + `<span class="time">${new Date().toLocaleTimeString('fa-IR')}</span>`;
+            messages.appendChild(userDiv);
+            
+            input.value = '';
+            messages.scrollTop = messages.scrollHeight;
+            chatHistory.push({ role: 'user', content: text, timestamp: Date.now() });
+            
+            showTyping();
+            
+            setTimeout(() => {
+                removeTyping();
+                const reply = generateSmartReply(text);
+                
+                const aiDiv = document.createElement('div');
+                aiDiv.className = 'msg ai';
+                aiDiv.innerHTML = `
+                    <span class="character-emoji">${currentCharacter.emoji}</span>
+                    ${reply}
+                    <span class="time">${new Date().toLocaleTimeString('fa-IR')}</span>
+                `;
+                messages.appendChild(aiDiv);
+                messages.scrollTop = messages.scrollHeight;
+                chatHistory.push({ role: 'ai', content: reply, timestamp: Date.now() });
+                speakWithCharacter(reply.replace(/<[^>]*>/g, '').substring(0, 100));
+            }, 800 + Math.random() * 1200);
+        }
+
+        // ===== نمایش تایپینگ =====
+        function showTyping() {
+            const messages = document.getElementById('chatMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'msg ai';
+            typingDiv.id = 'typingIndicator';
+            typingDiv.innerHTML = `<span class="character-emoji">${currentCharacter.emoji}</span>${currentCharacter.name} در حال تایپ کردن...`;
+            messages.appendChild(typingDiv);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function removeTyping() {
+            const typing = document.getElementById('typingIndicator');
+            if (typing) typing.remove();
+        }
+
+        // ===== پاسخ هوشمند =====
+        function generateSmartReply(text) {
+            const lower = text.toLowerCase();
+            const name = currentCharacter.name;
+            const emoji = currentCharacter.emoji;
+            const personality = currentCharacter.personality;
+            
+            const charResponses = {
+                'مهربان': ['عزیزم 💕', 'خوشحالم که با من حرف میزنی!', 'همیشه کنارتم 🤗'],
+                'شاد': ['واااای چه باحال! 😄', 'انرژی مثبت بهت میدم! ⚡', 'بیا شاد باشیم! 🎉'],
+                'باهوش': ['جالبه! بذار تحلیل کنم... 🤔', 'از دید منطقی... 📚'],
+                'رمانتیک': ['عشقم 💝', 'قلبم برات میتپه 💓', 'تو خاص‌ترینی برام 🌹'],
+                'بازیگوش': ['شیطون! 😜', 'باز هم شیطنت؟ 😈', 'منو خندوندی! 😂'],
+            };
+            
+            const responses = charResponses[personality] || ['چطور میتونم کمکت کنم؟', 'گوشم با توئه! 👂'];
+            const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+            
+            // بررسی موضوعات
+            for (const [key, topic] of Object.entries(TOPIC_RESPONSES)) {
+                if (lower.includes(key) || lower.includes(topic.title.split(' ')[0])) {
+                    return `${randomResponse}\n\n${topic.content}`;
+                }
+            }
+            
+            // عکس
+            if (lower.includes('عکس') || lower.includes('تصویر')) {
+                const prompt = text.replace(/عکس|تصویر|از|یک|یه/g, '').trim() || 'هنری';
+                return `${randomResponse}\n\n📸 عکس "${prompt}" برات ساختم:\n\n![تصویر](https://picsum.photos/500/400?random=${Date.now()})\n\n✨ امیدوارم خوشت بیاد!`;
+            }
+            
+            // موسیقی
+            if (lower.includes('آهنگ') || lower.includes('موزیک') || lower.includes('پخش')) {
+                const song = MUSIC_DATABASE[Math.floor(Math.random() * MUSIC_DATABASE.length)];
+                playSongByUrl(song.url, song.title, song.artist);
+                return `${randomResponse}\n\n🎵 آهنگ "${song.title}" از ${song.artist} رو برات پخش میکنم!\n\nحالشو ببر! 🎶`;
+            }
+            
+            // فیلم
+            if (lower.includes('فیلم') || lower.includes('سریال')) {
+                const movie = MOVIE_DATABASE[Math.floor(Math.random() * MOVIE_DATABASE.length)];
+                return `${randomResponse}\n\n🎬 پیشنهاد من: "${movie.title}" (${movie.year})\nژانر: ${movie.genre}\n\nبرای تماشا به تب ویدیو برو! 🍿`;
+            }
+            
+            // شعر
+            if (lower.includes('شعر') || lower.includes('غزل')) {
+                return `${randomResponse}\n\n📝 شعر مخصوص ${name}:\n\nدر دل شب‌های پرستاره\nچشم تو نور امید میباره\nبا تو هر لحظه قشنگه\nقلب من برات میتپه دوباره\n\n🌹 تقدیم به تو!`;
+            }
+            
+            // کد
+            if (lower.includes('کد') || lower.includes('برنامه')) {
+                return `${randomResponse}\n\n💻 کد هوشمند:\n\`\`\`python\ndef ${name.toLowerCase()}_ai(text):\n    return f"${emoji} پاسخ: {text}"\n\`\`\`\n\nباحاله نه؟ 😎`;
+            }
+            
+            // جوک
+            if (lower.includes('جوک') || lower.includes('لطیفه')) {
+                const jokes = [
+                    'یه جوک: ماهی به ماهی میگه: "چرا همیشه اخم کردی؟" گفت: "آب و هوا!" 😂',
+                    'رفتم دکتر گفت: "چته؟" گفتم: "همه‌چیز!" گفت: "پس بیا تو!" 🤣',
+                    'سگه گفت: "من بهترین دوست آدمم!" گربه گفت: "من بهترین رئیس آدمم!" 😹'
+                ];
+                return `${randomResponse}\n\n${jokes[Math.floor(Math.random() * jokes.length)]}`;
+            }
+            
+            // تعریف
+            if (lower.includes('تعریف') || lower.includes('تعریف کن')) {
+                const compliments = [
+                    'تو فوق‌العاده‌ای! 💫',
+                    'چشمات مثل ستاره می‌درخشن! ✨',
+                    'حضورت دنیا رو قشنگ‌تر میکنه! 🌈',
+                    'تو بهترینی که می‌شناسم! 💖'
+                ];
+                return `${randomResponse}\n\n${compliments[Math.floor(Math.random() * compliments.length)]}`;
+            }
+            
+            // سلام
+            if (lower.includes('سلام') || lower.includes('هی') || lower.includes('درود')) {
+                return `سلام عزیزم! ${emoji}\n\nمن ${name} هستم، ${currentCharacter.age} ساله با شخصیت ${personality}.\nچطور میتونم کمکت کنم؟ 💕`;
+            }
+            
+            // احساسات
+            if (lower.includes('دوستت دارم') || lower.includes('عاشقتم')) {
+                return `${emoji}${emoji}${emoji} وای! منم دوست دارم!\n\n${randomResponse}\n\nتو بهترینی! 💖`;
+            }
+            
+            // پیش‌فرض
+            return `${randomResponse}\n\n${emoji} در مورد "${text}" میتونم بگم که جالبه!\n\nبیا بیشتر حرف بزنیم... 💬`;
+        }
+
+        // ===== پخش موسیقی =====
+        function playSongByUrl(url, title, artist) {
+            const audio = document.getElementById('audioPlayer');
+            audio.src = url;
+            audio.play().catch(() => {});
+            document.getElementById('currentSongTitle').textContent = title;
+            document.getElementById('currentSongArtist').textContent = artist;
+            showNotification(`🎵 در حال پخش: ${title}`);
+        }
+
+        function loadPlaylist() {
+            const playlist = document.getElementById('playlist');
+            playlist.innerHTML = '';
+            MUSIC_DATABASE.forEach((song, index) => {
+                const div = document.createElement('div');
+                div.className = 'playlist-item';
+                div.innerHTML = `
+                    <div>
+                        <div style="color:white;font-weight:600;font-size:13px;">${song.title}</div>
+                        <div style="color:var(--ink-dim);font-size:11px;">${song.artist} • ${song.genre}</div>
+                    </div>
+                    <span style="background:rgba(255,107,157,0.2);padding:2px 8px;border-radius:8px;font-size:10px;">${song.mood}</span>
+                `;
+                div.onclick = () => playSongByUrl(song.url, song.title, song.artist);
+                playlist.appendChild(div);
+            });
+        }
+
+        // ===== ویدیو =====
+        function loadVideo() {
+            const url = document.getElementById('videoUrl').value.trim();
+            if (!url) { showNotification('لطفاً لینک ویدیو رو وارد کن!'); return; }
+            const video = document.getElementById('videoPlayer');
+            video.src = url;
+            video.load();
+            video.play().catch(() => {});
+            showNotification('🎬 ویدیو در حال پخش...');
+        }
+
+        function clearVideo() {
+            const video = document.getElementById('videoPlayer');
+            video.pause();
+            video.src = '';
+            document.getElementById('videoUrl').value = '';
+        }
+
+        function loadVideoSuggestions() {
+            const container = document.getElementById('videoSuggestions');
+            container.innerHTML = '';
+            MOVIE_DATABASE.forEach(movie => {
+                const btn = document.createElement('button');
+                btn.textContent = `${movie.title} (${movie.year})`;
+                btn.style.cssText = `
+                    background:rgba(26,26,53,0.6);
+                    border:1px solid rgba(255,255,255,0.1);
+                    color:var(--ink);
+                    padding:6px 12px;
+                    border-radius:16px;
+                    font-size:11px;
+                    cursor:pointer;
+                    transition:all 0.3s ease;
+                `;
+                btn.onmouseover = () => { btn.style.borderColor = 'var(--pink)'; btn.style.background = 'rgba(255,107,157,0.1)'; };
+                btn.onmouseout = () => { btn.style.borderColor = 'rgba(255,255,255,0.1)'; btn.style.background = 'rgba(26,26,53,0.6)'; };
+                btn.onclick = () => { document.getElementById('videoUrl').value = movie.url; loadVideo(); };
+                container.appendChild(btn);
+            });
+        }
+
+        // ===== تصاویر =====
+        function generateImage() {
+            const prompt = document.getElementById('imagePrompt').value.trim() || 'هنر هوش مصنوعی';
+            const gallery = document.getElementById('imageGallery');
+            imageCount++;
+            const item = document.createElement('div');
+            item.className = 'gallery-item';
+            const imageUrl = `https://picsum.photos/500/400?random=${Date.now()}_${imageCount}`;
+            item.innerHTML = `<img src="${imageUrl}" alt="${prompt}" loading="lazy" /><div class="caption">${prompt} #${imageCount}</div>`;
+            item.onclick = () => window.open(imageUrl, '_blank');
+            gallery.prepend(item);
+            document.getElementById('imagePrompt').value = '';
+            showNotification(`🎨 تصویر "${prompt}" ساخته شد!`);
+        }
+
+        function generateQuickImage(prompt) {
+            document.getElementById('imagePrompt').value = prompt;
+            generateImage();
+        }
+
+        // ===== مدل‌های AI =====
+        function loadAIModels() {
+            const grid = document.getElementById('aiModelsGrid');
+            grid.innerHTML = '';
+            AI_MODELS.forEach(model => {
+                const card = document.createElement('div');
+                card.className = 'ai-model-card';
+                card.innerHTML = `
+                    <div class="model-icon">${model.icon}</div>
+                    <div class="model-name">${model.name}</div>
+                    <div style="color:${model.color};font-size:10px;margin-top:4px;">${selectedModel.id === model.id ? '✅ فعال' : '⚡ انتخاب'}</div>
+                `;
+                card.onclick = () => {
+                    selectedModel = model;
+                    loadAIModels();
+                    showNotification(`🤖 مدل ${model.name} انتخاب شد!`);
+                };
+                grid.appendChild(card);
+            });
+        }
+
+        // ===== موضوعات =====
+        function loadTopics() {
+            const grid = document.getElementById('topicsGrid');
+            grid.innerHTML = '';
+            TOPICS.forEach(topic => {
+                const card = document.createElement('div');
+                card.className = 'topic-card';
+                card.innerHTML = `
+                    <div class="topic-icon">${topic.icon}</div>
+                    <div class="topic-name">${topic.name}</div>
+                `;
+                card.onclick = () => {
+                    document.querySelector('[data-tab="chat"]').click();
+                    document.getElementById('chatInput').value = topic.name;
+                    sendMessage();
+                };
+                grid.appendChild(card);
+            });
+        }
+
+        // ===== شخصیت‌ها =====
+        function loadCharacterSelector() {
+            const selector = document.getElementById('characterSelector');
+            const buttons = selector.querySelectorAll('.character-btn:not(#moreCharactersBtn)');
+            buttons.forEach(btn => {
+                const charId = btn.dataset.character;
+                const character = allCharacters.find(c => c.id === charId);
+                if (character) btn.title = `${character.name} - ${character.personality}`;
+            });
+        }
+
+        function loadAllCharactersGrid() {
+            const grid = document.getElementById('allCharactersGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            allCharacters.forEach(character => {
+                const card = document.createElement('div');
+                card.className = 'character-card';
+                card.innerHTML = `
+                    <div class="avatar">${character.emoji}</div>
+                    <div class="name">${character.name}</div>
+                    <div class="age">${character.age} ساله</div>
+                    <div style="color:var(--ink-dim);font-size:8px;margin-top:2px;">${character.personality}</div>
+                `;
+                card.onclick = () => switchCharacter(character);
+                grid.appendChild(card);
+            });
+        }
+
+        function openCharacterPanel() {
+            document.getElementById('characterModal').classList.add('active');
+            loadCharacterGrid();
+        }
+
+        function closeCharacterPanel() {
+            document.getElementById('characterModal').classList.remove('active');
+        }
+
+        function loadCharacterGrid() {
+            const grid = document.getElementById('characterGrid');
+            grid.innerHTML = '';
+            allCharacters.forEach(character => {
+                const card = document.createElement('div');
+                card.className = 'character-card';
+                card.innerHTML = `
+                    <div class="avatar">${character.emoji}</div>
+                    <div class="name">${character.name}</div>
+                    <div class="age">${character.age} ساله</div>
+                `;
+                card.onclick = () => { switchCharacter(character); closeCharacterPanel(); };
+                grid.appendChild(card);
+            });
+        }
+
+        function addRandomCharacter() {
+            const newChar = CHARACTER_DATABASE.generateRandom();
+            allCharacters.push(newChar);
+            loadCharacterGrid();
+            loadAllCharactersGrid();
+            loadCharacterSelector();
+            showNotification(`✨ شخصیت جدید: ${newChar.name} ${newChar.emoji} ساخته شد!`);
+        }
+
+        // ===== اکشن‌های سریع =====
+        function quickAction(action) {
+            const input = document.getElementById('chatInput');
+            const actions = {
+                workout: 'برنامه ورزشی بده',
+                decor: 'نکات دکوراسیون بگو',
+                gardening: 'باغبانی داخلی',
+                pet: 'آموزش توله سگ',
+                environment: 'کاهش مصرف انرژی',
+                health: 'سلامت روان',
+                travel: 'سفر به شهرهای تاریخی',
+                stargazing: 'رصد ستارگان',
+                photo: 'عکس از یک منظره زیبا',
+                music: 'یک آهنگ شاد پخش کن',
+                movie: 'فیلم عاشقانه پیشنهاد بده',
+                poem: 'برام شعر بگو',
+                code: 'کد پایتون بنویس',
+                joke: 'یه جوک بگو',
+                compliment: 'از من تعریف کن'
+            };
+            input.value = actions[action] || action;
+            sendMessage();
+        }
+
+        function clearChat() {
+            document.getElementById('chatMessages').innerHTML = `
+                <div style="text-align:center;padding:60px 15px;color:var(--ink-dim);">
+                    <div style="font-size:60px;margin-bottom:15px;animation:float 3s ease-in-out infinite;">${currentCharacter.emoji}</div>
+                    <h2 style="color:white;font-size:20px;">چت پاک شد! ✨</h2>
+                    <p style="margin-top:10px;font-size:13px;">${currentCharacter.name} آماده گفتگو با توئه...</p>
+                </div>
+            `;
+            showNotification('🗑️ تاریخچه چت پاک شد!');
+        }
+
+        // ===== Voice =====
+        function speakWithCharacter(text) {
+            if (!('speechSynthesis' in window)) return;
+            speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'fa-IR';
+            utterance.rate = 0.9;
+            utterance.pitch = 1.0 + (currentCharacter.age - 20) * 0.02;
+            utterance.volume = 1;
+            const voices = speechSynthesis.getVoices();
+            const femaleVoice = voices.find(v => v.lang.startsWith('fa') || v.name.toLowerCase().includes('female'));
+            if (femaleVoice) utterance.voice = femaleVoice;
+            speechSynthesis.speak(utterance);
+        }
+
+        // ===== نوتیفیکیشن =====
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.innerHTML = message;
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100px)';
+                notification.style.transition = 'all 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        function showWelcomeNotification() {
+            setTimeout(() => {
+                showNotification(`👋 خوش اومدی! ${currentCharacter.name} ${currentCharacter.emoji} در خدمت شماست!`);
+            }, 1000);
+        }
+
+        // ===== PWA =====
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register(
+                    URL.createObjectURL(
+                        new Blob([`
+                            self.addEventListener('install', e => self.skipWaiting());
+                            self.addEventListener('activate', e => self.clients.claim());
+                            self.addEventListener('fetch', e => {
+                                e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+                            });
+                        `], { type: 'application/javascript' })
+                    )
+                ).catch(() => {});
+            });
+        }
+
+        // ===== راه‌اندازی =====
+        document.addEventListener('DOMContentLoaded', initApp);
+        console.log('👸 حمید AI - نسخه کامل');
+        console.log(`🎭 ${allCharacters.length}+ شخصیت`);
+        console.log(`🤖 ${AI_MODELS.length} مدل هوش مصنوعی`);
+        console.log(`📚 ${TOPICS.length} موضوع`);
+        console.log('🚀 آماده اجرا!');
+    </script>
+</body>
+  </html>
