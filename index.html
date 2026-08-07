@@ -1,21 +1,104 @@
 // ================================================================
-//  ☁️ Cloudflare Worker - DeepSeek Fine-tuning
-//  فقط با D1 Database + API خارجی (بدون R2)
+//  ☁️ Cloudflare Worker - DeepSeek Fine-tuning Complete
+//  یکپارچه با D1 Database + API خارجی
 // ================================================================
 
 // ================================================================
-//  📦 تنظیمات اصلی
+//  📦 تنظیمات اصلی و ثابت‌ها
 // ================================================================
 
 const CONFIG = {
     LIMITS: {
         MAX_SAMPLES: 500,
-        MAX_DATA_SIZE: 100 * 1024
-    }
+        MAX_DATA_SIZE: 100 * 1024,
+        MAX_RETRIES: 3,
+        RETRY_DELAY: 1000
+    },
+    MODELS: {
+        '6.7B': {
+            replicate: 'deepseek-ai/deepseek-coder-6.7b-instruct:latest',
+            huggingface: 'deepseek-ai/deepseek-coder-6.7b-instruct',
+            maxTokens: 4096
+        },
+        '33B': {
+            replicate: 'deepseek-ai/deepseek-coder-33b-instruct:latest',
+            huggingface: 'deepseek-ai/deepseek-coder-33b-instruct',
+            maxTokens: 8192
+        },
+        'V2': {
+            replicate: 'deepseek-ai/deepseek-v2:latest',
+            huggingface: 'deepseek-ai/deepseek-v2',
+            maxTokens: 8192
+        },
+        'V3': {
+            replicate: 'deepseek-ai/deepseek-v3:latest',
+            huggingface: 'deepseek-ai/deepseek-v3',
+            maxTokens: 16384
+        }
+    },
+    DEFAULT_MODEL: '6.7B'
 };
 
 // ================================================================
-//  🧠 سرویس اصلی
+//  🗄️ Schema D1 - یکپارچه
+// ================================================================
+
+const SCHEMA = `
+-- جدول اصلی داده‌های آموزشی
+CREATE TABLE IF NOT EXISTS training_data (
+    id TEXT PRIMARY KEY,
+    data TEXT NOT NULL,
+    status TEXT DEFAULT 'prepared',
+    job_id TEXT UNIQUE,
+    progress REAL DEFAULT 0,
+    model TEXT DEFAULT '6.7B',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    started_at DATETIME,
+    completed_at DATETIME,
+    error TEXT,
+    retry_count INTEGER DEFAULT 0,
+    last_retry DATETIME
+);
+
+-- جدول نتایج آموزش
+CREATE TABLE IF NOT EXISTS training_results (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    job_id TEXT NOT NULL,
+    data_id TEXT,
+    results TEXT,
+    metadata TEXT,
+    metrics TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (job_id) REFERENCES training_data(job_id)
+);
+
+-- جدول Activity Logs
+CREATE TABLE IF NOT EXISTS activity_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    action TEXT NOT NULL,
+    details TEXT,
+    status TEXT,
+    ip TEXT,
+    user_agent TEXT,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- جدول Rate Limiting
+CREATE TABLE IF NOT EXISTS rate_limits (
+    ip TEXT PRIMARY KEY,
+    count INTEGER DEFAULT 1,
+    window_start DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ایندکس‌ها
+CREATE INDEX IF NOT EXISTS idx_job_id ON training_data(job_id);
+CREATE INDEX IF NOT EXISTS idx_status ON training_data(status);
+CREATE INDEX IF NOT EXISTS idx_created ON training_data(created_at);
+CREATE INDEX IF NOT EXISTS idx_logs_timestamp ON activity_logs(timestamp);
+`;
+
+// ================================================================
+//  🧠 سرویس اصلی DeepSeek
 // ================================================================
 
 class DeepSeekFineTuneService {
@@ -25,43 +108,139 @@ class DeepSeekFineTuneService {
     }
 
     // ============================================================
+    //  🏗️ مقداردهی اولیه دیتابیس
+    // ============================================================
+    
+    async initDB() {
+        try {
+            // اجرای Schema
+            const statements = SCHEMA.split(';').filter(s => s.trim());
+            for (const stmt of statements) {
+                await this.db.prepare(stmt).run();
+            }
+            return { success: true, message: 'Database initialized successfully' };
+        } catch (error) {
+            console.error('DB Init Error:', error);
+            throw new Error('Failed to initialize database: ' + error.message);
+        }
+    }
+
+    // ============================================================
     //  📝 آماده‌سازی داده
     // ============================================================
     
     async prepareData(data) {
-        const { instructions, outputs } = data;
-        
-        if (!instructions || !outputs || instructions.length !== outputs.length) {
-            throw new Error('داده‌های ورودی نامعتبر');
+        try {
+            const { instructions, outputs, model = CONFIG.DEFAULT_MODEL } = data;
+            
+            // اعتبارسنجی داده‌ها
+            if (!instructions || !outputs || instructions.length !== outputs.length) {
+                throw new Error('داده‌های ورودی نامعتبر');
+            }
+            
+            if (instructions.length > CONFIG.LIMITS.MAX_SAMPLES) {
+                throw new Error(`حداکثر ${CONFIG.LIMITS.MAX_SAMPLES} نمونه مجاز است`);
+            }
+
+            // اعتبارسنجی عمیق
+            this.validateData(instructions, outputs);
+            
+            // آماده‌سازی داده‌ها
+            const preparedData = instructions.map((instruction, i) => ({
+                instruction: instruction.trim(),
+                output: outputs[i].trim(),
+                prompt: this.buildPrompt(instruction),
+                model: model
+            }));
+            
+            const dataId = `data_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+            
+            // ذخیره در دیتابیس
+            await this.db.prepare(
+                `INSERT INTO training_data (id, data, model, created_at, status) 
+                 VALUES (?, ?, ?, CURRENT_TIMESTAMP, 'prepared')`
+            ).bind(dataId, JSON.stringify(preparedData), model).run();
+
+            // لاگ فعالیت
+            await this.logActivity('prepare_data', { dataId, count: preparedData.length });
+            
+            return {
+                success: true,
+                id: dataId,
+                count: preparedData.length,
+                size: JSON.stringify(preparedData).length,
+                model: model
+            };
+        } catch (error) {
+            await this.logActivity('prepare_data_error', { error: error.message }, 'error');
+            throw error;
         }
-        
-        if (instructions.length > CONFIG.LIMITS.MAX_SAMPLES) {
-            throw new Error(`حداکثر ${CONFIG.LIMITS.MAX_SAMPLES} نمونه مجاز است`);
-        }
-        
-        const preparedData = instructions.map((instruction, i) => ({
-            instruction: instruction.trim(),
-            output: outputs[i].trim(),
-            prompt: this.buildPrompt(instruction)
-        }));
-        
-        const dataId = `data_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-        
-        await this.db.prepare(
-            `INSERT INTO training_data (id, data, created_at, status) 
-             VALUES (?, ?, CURRENT_TIMESTAMP, 'prepared')`
-        ).bind(dataId, JSON.stringify(preparedData)).run();
-        
-        return {
-            success: true,
-            id: dataId,
-            count: preparedData.length,
-            size: JSON.stringify(preparedData).length
-        };
     }
 
     // ============================================================
-    //  📝 ساخت Prompt
+    //  ✅ اعتبارسنجی داده
+    // ============================================================
+    
+    validateData(instructions, outputs) {
+        const maxLength = 2000;
+        const invalidPattern = /[^\w\s\u0600-\u06FF\u200c\u200d.,!?(){}[\]<>;:'"+=*/\\|@#$%^&*~`-]/g;
+        
+        // بررسی طول
+        const longInst = instructions.filter(i => i.length > maxLength);
+        if (longInst.length) {
+            throw new Error(`برخی دستورالعمل‌ها طولانی‌تر از ${maxLength} کاراکتر هستند`);
+        }
+        
+        // بررسی کاراکترهای غیرمجاز
+        const hasInvalid = instructions.some(i => invalidPattern.test(i)) ||
+                          outputs.some(o => invalidPattern.test(o));
+        if (hasInvalid) {
+            throw new Error('داده‌ها شامل کاراکترهای غیرمجاز هستند');
+        }
+        
+        // بررسی تکراری‌ها
+        const uniqueInst = new Set(instructions);
+        if (uniqueInst.size < instructions.length) {
+            console.warn('⚠️ دستورالعمل‌های تکراری وجود دارد');
+        }
+        
+        // تشخیص زبان برنامه‌نویسی
+        const languages = outputs.map(o => this.detectLanguage(o));
+        const uniqueLangs = new Set(languages);
+        console.log(`📊 زبان‌های شناسایی شده: ${Array.from(uniqueLangs).join(', ')}`);
+    }
+
+    // ============================================================
+    //  🔍 تشخیص زبان برنامه‌نویسی
+    // ============================================================
+    
+    detectLanguage(code) {
+        const patterns = {
+            python: /def\s+\w+|class\s+\w+:|import\s+\w+|from\s+\w+\s+import/,
+            javascript: /function\s+\w+|const\s+\w+\s*=|let\s+\w+\s*=|=>|async\s+function/,
+            typescript: /interface\s+\w+|type\s+\w+\s*=|:(\s*)\w+[;,\s]/,
+            rust: /fn\s+\w+|impl\s+\w+|struct\s+\w+|pub\s+fn/,
+            go: /func\s+\w+|type\s+\w+\s+struct|package\s+\w+/,
+            java: /public\s+class|private\s+\w+|void\s+\w+\(|@Override/,
+            cpp: /#include|using\s+namespace|class\s+\w+\s*{|void\s+\w+\(/,
+            csharp: /using\s+System|namespace\s+\w+|class\s+\w+\s*{|public\s+void/,
+            php: /<\?php|function\s+\w+|class\s+\w+|echo\s+/,
+            ruby: /def\s+\w+|class\s+\w+|require\s+['"]/,
+            sql: /SELECT|INSERT|UPDATE|DELETE|CREATE\s+TABLE/,
+            html: /<[^>]+>|<!DOCTYPE|<html/,
+            css: /[.#][\w-]+\s*{|@media|@keyframes/
+        };
+        
+        for (const [lang, pattern] of Object.entries(patterns)) {
+            if (pattern.test(code)) {
+                return lang;
+            }
+        }
+        return 'unknown';
+    }
+
+    // ============================================================
+    //  📝 ساخت پرامپت DeepSeek
     // ============================================================
     
     buildPrompt(instruction) {
@@ -75,33 +254,53 @@ ${instruction.trim()}
     }
 
     // ============================================================
-    //  🚀 شروع Fine-tuning
+    //  🚀 شروع آموزش
     // ============================================================
     
     async startFineTune(dataId, options = {}) {
-        const result = await this.db.prepare(
-            'SELECT data FROM training_data WHERE id = ?'
-        ).bind(dataId).first();
-        
-        if (!result) {
-            throw new Error('داده‌ها یافت نشد');
+        try {
+            // دریافت داده‌ها
+            const result = await this.db.prepare(
+                'SELECT data, model FROM training_data WHERE id = ?'
+            ).bind(dataId).first();
+            
+            if (!result) {
+                throw new Error('داده‌ها یافت نشد');
+            }
+            
+            const trainingData = JSON.parse(result.data);
+            const model = options.model || result.model || CONFIG.DEFAULT_MODEL;
+            
+            // ارسال به سرویس خارجی
+            const jobId = await this.submitToExternalService(trainingData, {
+                ...options,
+                model: model
+            });
+            
+            // به‌روزرسانی دیتابیس
+            await this.db.prepare(
+                `UPDATE training_data 
+                 SET status = 'training', 
+                     job_id = ?, 
+                     started_at = CURRENT_TIMESTAMP,
+                     model = ?
+                 WHERE id = ?`
+            ).bind(jobId, model, dataId).run();
+            
+            await this.logActivity('start_training', { dataId, jobId, model });
+            
+            return {
+                jobId: jobId,
+                dataId: dataId,
+                status: 'training',
+                model: model,
+                estimatedTime: this.estimateTrainingTime(trainingData.length),
+                progress: 0
+            };
+        } catch (error) {
+            await this.logActivity('start_training_error', { error: error.message }, 'error');
+            throw error;
         }
-        
-        const trainingData = JSON.parse(result.data);
-        const jobId = await this.submitToExternalService(trainingData, options);
-        
-        await this.db.prepare(
-            `UPDATE training_data 
-             SET status = 'training', job_id = ?, started_at = CURRENT_TIMESTAMP 
-             WHERE id = ?`
-        ).bind(jobId, dataId).run();
-        
-        return {
-            jobId: jobId,
-            dataId: dataId,
-            status: 'training',
-            estimatedTime: this.estimateTrainingTime(trainingData.length)
-        };
     }
 
     // ============================================================
@@ -109,19 +308,27 @@ ${instruction.trim()}
     // ============================================================
     
     async submitToExternalService(data, options) {
+        const modelConfig = CONFIG.MODELS[options.model] || CONFIG.MODELS[CONFIG.DEFAULT_MODEL];
+        
+        // محدود کردن داده برای API
+        const smallData = data.slice(0, 100).map(d => ({
+            instruction: d.instruction.slice(0, 200),
+            output: d.output.slice(0, 200)
+        }));
+        
         // اولویت ۱: Replicate
         if (this.env.REPLICATE_API_TOKEN) {
-            return this.runOnReplicate(data, options);
+            return await this.runOnReplicate(smallData, options, modelConfig);
         }
         
         // اولویت ۲: Hugging Face
         if (this.env.HUGGINGFACE_TOKEN) {
-            return this.runOnHuggingFace(data, options);
+            return await this.runOnHuggingFace(smallData, options, modelConfig);
         }
         
-        // اولویت ۳: اجرای محلی
+        // اولویت ۳: اجرای محلی (برای داده‌های کوچک)
         if (data.length < 50) {
-            return this.runLocallyWasm(data, options);
+            return await this.runLocally(data, options);
         }
         
         throw new Error('هیچ سرویس خارجی تنظیم نشده است');
@@ -131,30 +338,29 @@ ${instruction.trim()}
     //  🎯 Replicate API
     // ============================================================
     
-    async runOnReplicate(data, options) {
-        const smallData = data.slice(0, 100).map(d => ({
-            instruction: d.instruction.slice(0, 200),
-            output: d.output.slice(0, 200)
-        }));
-        
-        const response = await fetch('https://api.replicate.com/v1/predictions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Token ${this.env.REPLICATE_API_TOKEN}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                version: 'deepseek-ai/deepseek-coder-6.7b-instruct:latest',
-                input: {
-                    training_data: smallData,
-                    epochs: options.epochs || 1,
-                    batch_size: Math.min(options.batchSize || 4, 8),
-                    learning_rate: options.learningRate || 2e-5
+    async runOnReplicate(data, options, modelConfig) {
+        const response = await this.fetchWithRetry(
+            'https://api.replicate.com/v1/predictions',
+            {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Token ${this.env.REPLICATE_API_TOKEN}`,
+                    'Content-Type': 'application/json'
                 },
-                webhook: `${this.env.WORKER_URL}/api/webhook`,
-                webhook_events_filter: ["completed"]
-            })
-        });
+                body: JSON.stringify({
+                    version: modelConfig.replicate,
+                    input: {
+                        training_data: data,
+                        epochs: options.epochs || 1,
+                        batch_size: Math.min(options.batchSize || 4, 8),
+                        learning_rate: options.learningRate || 2e-5,
+                        max_tokens: modelConfig.maxTokens || 4096
+                    },
+                    webhook: `${this.env.WORKER_URL}/api/webhook`,
+                    webhook_events_filter: ["completed"]
+                })
+            }
+        );
         
         const result = await response.json();
         return result.id;
@@ -164,11 +370,9 @@ ${instruction.trim()}
     //  🎯 Hugging Face API
     // ============================================================
     
-    async runOnHuggingFace(data, options) {
-        const smallData = data.slice(0, 10);
-        
-        const response = await fetch(
-            'https://api-inference.huggingface.co/models/deepseek-ai/deepseek-coder-6.7b-instruct',
+    async runOnHuggingFace(data, options, modelConfig) {
+        const response = await this.fetchWithRetry(
+            `https://api-inference.huggingface.co/models/${modelConfig.huggingface}`,
             {
                 method: 'POST',
                 headers: {
@@ -176,18 +380,21 @@ ${instruction.trim()}
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    inputs: smallData.map(d => d.prompt),
+                    inputs: data.map(d => d.prompt),
                     parameters: {
-                        max_length: 100,
-                        temperature: 0.7
+                        max_length: Math.min(options.maxLength || 100, modelConfig.maxTokens || 4096),
+                        temperature: options.temperature || 0.7,
+                        top_p: options.topP || 0.95,
+                        do_sample: true
                     }
                 })
             }
         );
         
         const result = await response.json();
-        const jobId = `hf_${Date.now()}`;
+        const jobId = `hf_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
         
+        // ذخیره نتایج
         await this.db.prepare(
             `INSERT INTO training_results (job_id, data_id, results, created_at) 
              VALUES (?, ?, ?, CURRENT_TIMESTAMP)`
@@ -197,23 +404,75 @@ ${instruction.trim()}
     }
 
     // ============================================================
-    //  🎯 اجرای محلی (WebAssembly)
+    //  🎯 اجرای محلی
     // ============================================================
     
-    async runLocallyWasm(data, options) {
-        const jobId = `local_${Date.now()}`;
+    async runLocally(data, options) {
+        const jobId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
         
-        const results = data.map(d => ({
+        // شبیه‌سازی آموزش
+        const results = data.map((d, index) => ({
             instruction: d.instruction,
-            generated: `[Simulated] Response for: ${d.instruction.substring(0, 50)}...`
+            generated: `[Simulated Response ${index + 1}] ${d.instruction.substring(0, 50)}...`,
+            confidence: Math.random() * 0.3 + 0.7 // 70-100%
         }));
         
+        // ذخیره نتایج
         await this.db.prepare(
-            `INSERT INTO training_results (job_id, data_id, results, created_at) 
-             VALUES (?, ?, ?, CURRENT_TIMESTAMP)`
-        ).bind(jobId, 'local', JSON.stringify(results)).run();
+            `INSERT INTO training_results (job_id, data_id, results, metadata, created_at) 
+             VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`
+        ).bind(
+            jobId, 
+            'local', 
+            JSON.stringify(results),
+            JSON.stringify({ type: 'local_simulation', samples: data.length })
+        ).run();
+        
+        // به‌روزرسانی وضعیت
+        await this.db.prepare(
+            `UPDATE training_data 
+             SET status = 'completed', completed_at = CURRENT_TIMESTAMP, progress = 1.0
+             WHERE job_id = ?`
+        ).bind(jobId).run();
         
         return jobId;
+    }
+
+    // ============================================================
+    //  🔄 Fetch با Retry
+    // ============================================================
+    
+    async fetchWithRetry(url, options, maxRetries = CONFIG.LIMITS.MAX_RETRIES) {
+        let lastError;
+        let delay = CONFIG.LIMITS.RETRY_DELAY;
+        
+        for (let i = 0; i < maxRetries; i++) {
+            try {
+                const response = await fetch(url, options);
+                
+                if (response.ok) {
+                    return response;
+                }
+                
+                if (response.status === 429) {
+                    const waitTime = delay * Math.pow(2, i);
+                    console.log(`⏳ Rate limited. Waiting ${waitTime}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, waitTime));
+                    continue;
+                }
+                
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            } catch (error) {
+                lastError = error;
+                if (i < maxRetries - 1) {
+                    const waitTime = delay * Math.pow(2, i);
+                    console.log(`🔄 Retry ${i + 1}/${maxRetries} after ${waitTime}ms`);
+                    await new Promise(resolve => setTimeout(resolve, waitTime));
+                }
+            }
+        }
+        
+        throw lastError || new Error('All retries failed');
     }
 
     // ============================================================
@@ -229,13 +488,30 @@ ${instruction.trim()}
             throw new Error('Job not found');
         }
         
+        // محاسبه زمان باقی‌مانده
+        let estimatedRemaining = null;
+        if (result.status === 'training' && result.progress < 1) {
+            const elapsed = (Date.now() - new Date(result.started_at).getTime()) / 1000;
+            const totalEstimated = this.estimateTrainingTime(
+                JSON.parse(result.data).length
+            ).seconds;
+            const remaining = totalEstimated * (1 - result.progress);
+            estimatedRemaining = {
+                seconds: Math.round(remaining),
+                readable: this.formatTime(remaining)
+            };
+        }
+        
         return {
             jobId: jobId,
             status: result.status,
             progress: result.progress || 0,
+            model: result.model,
             created_at: result.created_at,
             started_at: result.started_at,
-            completed_at: result.completed_at
+            completed_at: result.completed_at,
+            estimated_remaining: estimatedRemaining,
+            error: result.error
         };
     }
 
@@ -245,14 +521,91 @@ ${instruction.trim()}
     
     async getResults(jobId) {
         const result = await this.db.prepare(
-            'SELECT results FROM training_results WHERE job_id = ?'
+            `SELECT results, metadata, created_at FROM training_results WHERE job_id = ?`
         ).bind(jobId).first();
         
         if (!result) {
             throw new Error('Result not found');
         }
         
-        return JSON.parse(result.results);
+        return {
+            jobId: jobId,
+            results: JSON.parse(result.results),
+            metadata: result.metadata ? JSON.parse(result.metadata) : null,
+            created_at: result.created_at
+        };
+    }
+
+    // ============================================================
+    //  📊 دریافت متریک‌ها
+    // ============================================================
+    
+    async getMetrics(jobId) {
+        const data = await this.db.prepare(
+            `SELECT 
+                d.data,
+                d.status,
+                d.progress,
+                d.created_at,
+                r.results,
+                r.metadata
+             FROM training_data d
+             LEFT JOIN training_results r ON d.job_id = r.job_id
+             WHERE d.job_id = ?`
+        ).bind(jobId).first();
+        
+        if (!data) {
+            throw new Error('Job not found');
+        }
+        
+        const trainingData = JSON.parse(data.data);
+        const results = data.results ? JSON.parse(data.results) : null;
+        
+        return {
+            jobId: jobId,
+            status: data.status,
+            progress: data.progress,
+            samples: {
+                total: trainingData.length,
+                processed: Math.round(trainingData.length * data.progress),
+                languages: this.getLanguageStats(trainingData)
+            },
+            performance: results ? this.calculateMetrics(results) : null,
+            timing: {
+                created: data.created_at,
+                started: data.started_at,
+                completed: data.completed_at,
+                duration: this.calculateDuration(data.created_at, data.completed_at)
+            }
+        };
+    }
+
+    // ============================================================
+    //  📊 آمار زبان‌ها
+    // ============================================================
+    
+    getLanguageStats(data) {
+        const stats = {};
+        data.forEach(item => {
+            const lang = this.detectLanguage(item.output);
+            stats[lang] = (stats[lang] || 0) + 1;
+        });
+        return stats;
+    }
+
+    // ============================================================
+    //  📊 محاسبه متریک‌ها
+    // ============================================================
+    
+    calculateMetrics(results) {
+        if (!Array.isArray(results)) return null;
+        
+        return {
+            total: results.length,
+            average_confidence: results.reduce((acc, r) => acc + (r.confidence || 0.8), 0) / results.length,
+            successful: results.filter(r => r.generated && r.generated.length > 0).length,
+            failed: results.filter(r => !r.generated || r.generated.length === 0).length
+        };
     }
 
     // ============================================================
@@ -267,7 +620,36 @@ ${instruction.trim()}
         return {
             seconds: totalSeconds,
             minutes: Math.round(totalSeconds / 60),
-            readable: totalSeconds < 60 ? `${totalSeconds} ثانیه` : `${Math.round(totalSeconds / 60)} دقیقه`
+            readable: this.formatTime(totalSeconds)
+        };
+    }
+
+    // ============================================================
+    //  ⏱️ فرمت زمان
+    // ============================================================
+    
+    formatTime(seconds) {
+        if (seconds < 60) {
+            return `${Math.round(seconds)} ثانیه`;
+        } else if (seconds < 3600) {
+            return `${Math.round(seconds / 60)} دقیقه`;
+        } else {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.round((seconds % 3600) / 60);
+            return `${hours} ساعت و ${minutes} دقیقه`;
+        }
+    }
+
+    // ============================================================
+    //  ⏱️ محاسبه مدت زمان
+    // ============================================================
+    
+    calculateDuration(start, end) {
+        if (!start || !end) return null;
+        const diff = (new Date(end) - new Date(start)) / 1000;
+        return {
+            seconds: diff,
+            readable: this.formatTime(diff)
         };
     }
 
@@ -276,27 +658,132 @@ ${instruction.trim()}
     // ============================================================
     
     async handleWebhook(data) {
-        const { id, status, output } = data;
-        
-        await this.db.prepare(
-            `UPDATE training_data 
-             SET status = ?, completed_at = CURRENT_TIMESTAMP 
-             WHERE job_id = ?`
-        ).bind(status === 'succeeded' ? 'completed' : 'failed', id).run();
-        
-        if (status === 'succeeded' && output) {
+        try {
+            const { id, status, output } = data;
+            
+            // به‌روزرسانی وضعیت
             await this.db.prepare(
-                `INSERT INTO training_results (job_id, results, created_at) 
-                 VALUES (?, ?, CURRENT_TIMESTAMP)`
-            ).bind(id, JSON.stringify(output)).run();
+                `UPDATE training_data 
+                 SET status = ?, 
+                     progress = 1.0,
+                     completed_at = CURRENT_TIMESTAMP 
+                 WHERE job_id = ?`
+            ).bind(
+                status === 'succeeded' ? 'completed' : 'failed',
+                id
+            ).run();
+            
+            // ذخیره نتایج
+            if (status === 'succeeded' && output) {
+                await this.db.prepare(
+                    `INSERT INTO training_results (job_id, results, metadata, created_at) 
+                     VALUES (?, ?, ?, CURRENT_TIMESTAMP)`
+                ).bind(
+                    id,
+                    JSON.stringify(output),
+                    JSON.stringify({ source: 'webhook', timestamp: new Date().toISOString() })
+                ).run();
+            }
+            
+            await this.logActivity('webhook_received', { jobId: id, status });
+            
+            return { success: true, jobId: id };
+        } catch (error) {
+            await this.logActivity('webhook_error', { error: error.message }, 'error');
+            throw error;
+        }
+    }
+
+    // ============================================================
+    //  📝 لاگ فعالیت
+    // ============================================================
+    
+    async logActivity(action, details, status = 'success') {
+        try {
+            await this.db.prepare(
+                `INSERT INTO activity_logs (action, details, status, timestamp) 
+                 VALUES (?, ?, ?, CURRENT_TIMESTAMP)`
+            ).bind(action, JSON.stringify(details), status).run();
+        } catch (error) {
+            console.error('Logging error:', error);
+        }
+    }
+
+    // ============================================================
+    //  🧹 پاکسازی داده‌های قدیمی
+    // ============================================================
+    
+    async cleanupOldData(daysToKeep = 30) {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - daysToKeep);
+        
+        const deleted = {
+            training_data: 0,
+            training_results: 0,
+            activity_logs: 0
+        };
+        
+        // حذف داده‌های آموزشی قدیمی
+        const result1 = await this.db.prepare(
+            `DELETE FROM training_data 
+             WHERE status IN ('completed', 'failed') 
+             AND created_at < ?`
+        ).bind(cutoff.toISOString()).run();
+        deleted.training_data = result1.changes || 0;
+        
+        // حذف نتایج قدیمی
+        const result2 = await this.db.prepare(
+            `DELETE FROM training_results 
+             WHERE created_at < ?`
+        ).bind(cutoff.toISOString()).run();
+        deleted.training_results = result2.changes || 0;
+        
+        // حذف لاگ‌های قدیمی
+        const result3 = await this.db.prepare(
+            `DELETE FROM activity_logs 
+             WHERE timestamp < ?`
+        ).bind(cutoff.toISOString()).run();
+        deleted.activity_logs = result3.changes || 0;
+        
+        await this.logActivity('cleanup', deleted);
+        
+        return {
+            success: true,
+            deleted: deleted,
+            days_kept: daysToKeep
+        };
+    }
+
+    // ============================================================
+    //  📋 لیست تمام Jobها
+    // ============================================================
+    
+    async listJobs(limit = 50, offset = 0, status = null) {
+        let query = `SELECT id, job_id, status, progress, model, created_at, started_at, completed_at 
+                     FROM training_data`;
+        const params = [];
+        
+        if (status) {
+            query += ` WHERE status = ?`;
+            params.push(status);
         }
         
-        return { success: true };
+        query += ` ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+        params.push(limit, offset);
+        
+        const results = await this.db.prepare(query).bind(...params).all();
+        
+        return {
+            jobs: results.results || [],
+            total: results.results?.length || 0,
+            limit,
+            offset
+        };
     }
 }
 
 // ================================================================
-//  🌐 Cloudflare Worker
+//  🌐 Cloudflare Worker اصلی
 // ================================================================
 
 export default {
@@ -309,22 +796,38 @@ export default {
             return new Response(null, {
                 headers: {
                     'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-                    'Access-Control-Allow-Headers': 'Content-Type'
+                    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
                 }
             });
         }
 
         try {
+            // مقداردهی اولیه دیتابیس
+            if (url.pathname === '/api/init' && request.method === 'POST') {
+                const result = await service.initDB();
+                return this.jsonResponse(result);
+            }
+
             // 🏠 Health Check
             if (url.pathname === '/') {
-                return new Response(JSON.stringify({
+                return this.jsonResponse({
                     status: 'online',
-                    service: 'DeepSeek Fine-tuning (No R2)',
+                    service: 'DeepSeek Fine-tuning Complete',
                     storage: 'D1 Database',
-                    limits: CONFIG.LIMITS
-                }), {
-                    headers: { 'Content-Type': 'application/json' }
+                    models: Object.keys(CONFIG.MODELS),
+                    limits: CONFIG.LIMITS,
+                    endpoints: [
+                        'POST /api/init',
+                        'POST /api/prepare',
+                        'POST /api/train',
+                        'GET /api/status?jobId=xxx',
+                        'GET /api/results?jobId=xxx',
+                        'GET /api/metrics?jobId=xxx',
+                        'GET /api/jobs',
+                        'POST /api/webhook',
+                        'DELETE /api/cleanup?days=30'
+                    ]
                 });
             }
 
@@ -332,18 +835,14 @@ export default {
             if (url.pathname === '/api/prepare' && request.method === 'POST') {
                 const body = await request.json();
                 const result = await service.prepareData(body);
-                return new Response(JSON.stringify(result), {
-                    headers: { 'Content-Type': 'application/json' }
-                });
+                return this.jsonResponse(result);
             }
 
             // 🚀 شروع آموزش
             if (url.pathname === '/api/train' && request.method === 'POST') {
                 const body = await request.json();
                 const result = await service.startFineTune(body.dataId, body.options);
-                return new Response(JSON.stringify(result), {
-                    headers: { 'Content-Type': 'application/json' }
-                });
+                return this.jsonResponse(result);
             }
 
             // 📊 وضعیت
@@ -351,9 +850,7 @@ export default {
                 const jobId = url.searchParams.get('jobId');
                 if (!jobId) throw new Error('jobId required');
                 const result = await service.getJobStatus(jobId);
-                return new Response(JSON.stringify(result), {
-                    headers: { 'Content-Type': 'application/json' }
-                });
+                return this.jsonResponse(result);
             }
 
             // 📥 دریافت نتایج
@@ -361,77 +858,69 @@ export default {
                 const jobId = url.searchParams.get('jobId');
                 if (!jobId) throw new Error('jobId required');
                 const result = await service.getResults(jobId);
-                return new Response(JSON.stringify(result), {
-                    headers: { 'Content-Type': 'application/json' }
-                });
+                return this.jsonResponse(result);
+            }
+
+            // 📊 متریک‌ها
+            if (url.pathname === '/api/metrics' && request.method === 'GET') {
+                const jobId = url.searchParams.get('jobId');
+                if (!jobId) throw new Error('jobId required');
+                const result = await service.getMetrics(jobId);
+                return this.jsonResponse(result);
+            }
+
+            // 📋 لیست Jobها
+            if (url.pathname === '/api/jobs' && request.method === 'GET') {
+                const limit = parseInt(url.searchParams.get('limit') || '50');
+                const offset = parseInt(url.searchParams.get('offset') || '0');
+                const status = url.searchParams.get('status');
+                const result = await service.listJobs(limit, offset, status);
+                return this.jsonResponse(result);
             }
 
             // 🔄 Webhook
             if (url.pathname === '/api/webhook' && request.method === 'POST') {
                 const body = await request.json();
                 const result = await service.handleWebhook(body);
-                return new Response(JSON.stringify(result), {
-                    headers: { 'Content-Type': 'application/json' }
-                });
+                return this.jsonResponse(result);
+            }
+
+            // 🧹 پاکسازی
+            if (url.pathname === '/api/cleanup' && request.method === 'DELETE') {
+                const days = parseInt(url.searchParams.get('days') || '30');
+                const result = await service.cleanupOldData(days);
+                return this.jsonResponse(result);
             }
 
             // ❌ 404
-            return new Response(JSON.stringify({
+            return this.jsonResponse({
                 error: 'Not found',
-                endpoints: [
-                    'POST /api/prepare',
-                    'POST /api/train',
-                    'GET /api/status?jobId=xxx',
-                    'GET /api/results?jobId=xxx',
-                    'POST /api/webhook'
-                ]
-            }), {
-                status: 404,
-                headers: { 'Content-Type': 'application/json' }
-            });
+                message: 'Endpoint not available'
+            }, 404);
 
         } catch (error) {
-            return new Response(JSON.stringify({
-                error: error.message
-            }), {
-                status: 500,
-                headers: { 'Content-Type': 'application/json' }
-            });
+            console.error('Error:', error);
+            return this.jsonResponse({
+                error: error.message,
+                stack: error.stack
+            }, 500);
         }
+    },
+
+    // ============================================================
+    //  🛠️ Helper برای JSON Response
+    // ============================================================
+    
+    jsonResponse(data, status = 200) {
+        return new Response(JSON.stringify(data, null, 2), {
+            status: status,
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            }
+        });
     }
 };
-
-// ================================================================
-//  🗄️ Schema D1
-// ================================================================
-
-/*
-
-CREATE TABLE IF NOT EXISTS training_data (
-    id TEXT PRIMARY KEY,
-    data TEXT NOT NULL,
-    status TEXT DEFAULT 'prepared',
-    job_id TEXT,
-    progress REAL DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    started_at DATETIME,
-    completed_at DATETIME,
-    error TEXT
-);
-
-CREATE TABLE IF NOT EXISTS training_results (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    job_id TEXT NOT NULL,
-    data_id TEXT,
-    results TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (job_id) REFERENCES training_data(job_id)
-);
-
-CREATE INDEX idx_job_id ON training_data(job_id);
-CREATE INDEX idx_status ON training_data(status);
-
-*/
 
 // ================================================================
 //  ⚙️ wrangler.toml
@@ -439,7 +928,7 @@ CREATE INDEX idx_status ON training_data(status);
 
 /*
 
-name = "deepseek-finetune"
+name = "deepseek-finetune-complete"
 main = "src/index.js"
 compatibility_date = "2024-01-01"
 
@@ -450,6 +939,145 @@ database_id = "your-database-id"
 
 [vars]
 REPLICATE_API_TOKEN = "r8_xxxxxxxxxxxxx"
+HUGGINGFACE_TOKEN = "hf_xxxxxxxxxxxxx"
 WORKER_URL = "https://your-worker.workers.dev"
 
+[env.production]
+vars = { REPLICATE_API_TOKEN = "prod_token", WORKER_URL = "https://prod-worker.workers.dev" }
+
+[env.staging]
+vars = { REPLICATE_API_TOKEN = "staging_token", WORKER_URL = "https://staging-worker.workers.dev" }
+
 */
+
+// ================================================================
+//  📦 فایل package.json برای دیپلوی
+// ================================================================
+
+/*
+
+{
+  "name": "deepseek-finetune-worker",
+  "version": "1.0.0",
+  "description": "DeepSeek Fine-tuning on Cloudflare Worker",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:prod": "wrangler deploy --env production",
+    "init-db": "wrangler d1 execute deepseek-training --command='$(cat schema.sql)'"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}
+
+*/
+
+// ================================================================
+//  📝 فایل schema.sql برای دیتابیس
+// ================================================================
+
+/*
+
+-- اجرای اسکریپت کامل دیتابیس
+CREATE TABLE IF NOT EXISTS training_data (
+    id TEXT PRIMARY KEY,
+    data TEXT NOT NULL,
+    status TEXT DEFAULT 'prepared',
+    job_id TEXT UNIQUE,
+    progress REAL DEFAULT 0,
+    model TEXT DEFAULT '6.7B',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    started_at DATETIME,
+    completed_at DATETIME,
+    error TEXT,
+    retry_count INTEGER DEFAULT 0,
+    last_retry DATETIME
+);
+
+CREATE TABLE IF NOT EXISTS training_results (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    job_id TEXT NOT NULL,
+    data_id TEXT,
+    results TEXT,
+    metadata TEXT,
+    metrics TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (job_id) REFERENCES training_data(job_id)
+);
+
+CREATE TABLE IF NOT EXISTS activity_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    action TEXT NOT NULL,
+    details TEXT,
+    status TEXT,
+    ip TEXT,
+    user_agent TEXT,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS rate_limits (
+    ip TEXT PRIMARY KEY,
+    count INTEGER DEFAULT 1,
+    window_start DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_job_id ON training_data(job_id);
+CREATE INDEX IF NOT EXISTS idx_status ON training_data(status);
+CREATE INDEX IF NOT EXISTS idx_created ON training_data(created_at);
+CREATE INDEX IF NOT EXISTS idx_logs_timestamp ON activity_logs(timestamp);
+
+-- ایندکس‌های اضافی برای بهبود عملکرد
+CREATE INDEX IF NOT EXISTS idx_job_id_results ON training_results(job_id);
+CREATE INDEX IF NOT EXISTS idx_status_created ON training_data(status, created_at);
+
+*/
+
+// ================================================================
+//  📝 مثال استفاده از API
+// ================================================================
+
+/*
+
+// 1. آماده‌سازی داده
+POST /api/prepare
+{
+    "instructions": ["Write a Python function", "Create a JavaScript class"],
+    "outputs": ["def function():", "class MyClass {"],
+    "model": "6.7B"
+}
+
+// 2. شروع آموزش
+POST /api/train
+{
+    "dataId": "data_1234567890_abc123",
+    "options": {
+        "epochs": 3,
+        "batchSize": 4,
+        "learningRate": 2e-5,
+        "model": "33B"
+    }
+}
+
+// 3. بررسی وضعیت
+GET /api/status?jobId=job_123
+
+// 4. دریافت نتایج
+GET /api/results?jobId=job_123
+
+// 5. دریافت متریک‌ها
+GET /api/metrics?jobId=job_123
+
+// 6. لیست همه Jobها
+GET /api/jobs?limit=10&offset=0&status=completed
+
+// 7. پاکسازی داده‌های قدیمی
+DELETE /api/cleanup?days=30
+
+*/
+
+// ================================================================
+//  ✅ پایان فایل
+// ================================================================
