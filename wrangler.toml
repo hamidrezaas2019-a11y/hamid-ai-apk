@@ -1,0 +1,14 @@
+# wrangler.toml
+name = "deepseek-finetune-complete"
+main = "index.js"  # تغییر از src/index.js به index.js
+compatibility_date = "2024-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "deepseek-training"
+database_id = "your-database-id"
+
+[vars]
+REPLICATE_API_TOKEN = "r8_xxxxxxxxxxxxx"
+HUGGINGFACE_TOKEN = "hf_xxxxxxxxxxxxx"
+WORKER_URL = "https://your-worker.workers.dev"
